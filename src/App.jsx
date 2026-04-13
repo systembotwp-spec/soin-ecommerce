@@ -93,7 +93,7 @@ export default function App() {
       {view === "inicio" && (
         <>
           <div style={{ width: "100%", height: "280px", overflow: "hidden" }}>
-            <img src="/soin-Banner.png" style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="Banner Principal" />
+            <img src="/soin-banner.png" style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="Banner Principal" />
           </div>
           
           <div style={{ padding: "40px 15px", textAlign: "center" }}>
@@ -165,7 +165,7 @@ export default function App() {
       <footer style={{ background: COLORS.primary, padding: "50px 5% 30px", color: "white" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <div style={{ marginBottom: "40px" }}>
-            <img src="/Logo sin Fondo.jpg" alt="Logo White" style={{ height: "45px", marginBottom: "20px", filter: "brightness(0) invert(1)" }} />
+            <img src="/Logo.png" alt="Logo White" style={{ height: "45px", marginBottom: "20px", filter: "brightness(0) invert(1)" }} />
             <p style={{ fontSize: "14px", opacity: 0.9, lineHeight: "1.6", maxWidth: "400px" }}>Cuidamos lo que más quieres. Productos de alta calidad seleccionados especialmente para el bienestar de tus compañeros.</p>
           </div>
           
