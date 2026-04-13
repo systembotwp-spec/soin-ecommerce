@@ -1,12 +1,19 @@
 import { ShoppingCart } from "lucide-react";
+import { useState } from "react";
 
 export default function App() {
+
+  const [cart, setCart] = useState([]);
 
   const products = [
     { id: 1, name: "Alimento Premium", price: 85000 },
     { id: 2, name: "Collar Natural", price: 25000 },
     { id: 3, name: "Kit Higiene", price: 45000 },
   ];
+
+  const addToCart = (product) => {
+    setCart([...cart, product]);
+  };
 
   return (
     <div style={{ fontFamily: "Arial", background: "#f7f5f2", minHeight: "100vh" }}>
@@ -18,6 +25,7 @@ export default function App() {
         padding: "20px 40px"
       }}>
         <h1 style={{ color: "#2f4f3e" }}>SOIN</h1>
+
         <button style={{
           background: "#4f7c62",
           color: "white",
@@ -27,7 +35,7 @@ export default function App() {
           display: "flex",
           gap: "5px"
         }}>
-          <ShoppingCart size={18}/> Carrito
+          <ShoppingCart size={18}/> ({cart.length})
         </button>
       </div>
 
@@ -45,16 +53,6 @@ export default function App() {
           <p style={{ color: "#666" }}>
             Alimentos, accesorios, salud y mucho amor.
           </p>
-          <button style={{
-            background: "#4f7c62",
-            color: "white",
-            padding: "12px 20px",
-            borderRadius: "10px",
-            border: "none",
-            marginTop: "20px"
-          }}>
-            Comprar ahora
-          </button>
         </div>
 
         <img 
@@ -94,15 +92,18 @@ export default function App() {
                 ${p.price.toLocaleString()}
               </p>
 
-              <button style={{
-                width: "100%",
-                background: "#4f7c62",
-                color: "white",
-                padding: "10px",
-                borderRadius: "10px",
-                border: "none",
-                marginTop: "10px"
-              }}>
+              <button 
+                onClick={() => addToCart(p)}
+                style={{
+                  width: "100%",
+                  background: "#4f7c62",
+                  color: "white",
+                  padding: "10px",
+                  borderRadius: "10px",
+                  border: "none",
+                  marginTop: "10px"
+                }}
+              >
                 Agregar al carrito
               </button>
             </div>
