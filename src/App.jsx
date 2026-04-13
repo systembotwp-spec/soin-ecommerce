@@ -95,107 +95,104 @@ export default function App() {
         </button>
       </div>
 
-      {/* Hero */}
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "40px"
+{/* HERO PREMIUM */}
+<div style={{
+  position: "relative",
+  width: "100%",
+  height: "420px",
+  borderRadius: "0 0 40px 40px",
+  overflow: "hidden",
+  marginBottom: "40px"
+}}>
+
+  {/* Imagen fondo */}
+  <img
+    src="/soin-banner.png"
+    style={{
+      width: "100%",
+      height: "100%",
+      objectFit: "cover"
+    }}
+  />
+
+  {/* Overlay oscuro suave */}
+  <div style={{
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "rgba(0,0,0,0.25)"
+  }} />
+
+  {/* Contenido */}
+  <div style={{
+    position: "absolute",
+    top: "50%",
+    left: "60px",
+    transform: "translateY(-50%)",
+    color: "white",
+    maxWidth: "500px"
+  }}>
+    
+    <h1 style={{
+      fontSize: "48px",
+      fontWeight: "700",
+      marginBottom: "10px"
+    }}>
+      Todo lo que tu mascota necesita
+    </h1>
+
+    <p style={{
+      fontSize: "18px",
+      opacity: 0.9,
+      marginBottom: "20px"
+    }}>
+      Alimentos, accesorios, salud y mucho amor en un solo lugar.
+    </p>
+
+    <button style={{
+      background: "#4f7c62",
+      color: "white",
+      padding: "14px 24px",
+      borderRadius: "12px",
+      border: "none",
+      fontWeight: "600",
+      cursor: "pointer"
+    }}>
+      Comprar ahora
+    </button>
+
+  </div>
+</div>
+
+{/* BENEFICIOS */}
+<div style={{
+  display: "flex",
+  justifyContent: "space-around",
+  padding: "20px 40px",
+  marginBottom: "30px"
+}}>
+  
+  {[
+    "Productos naturales",
+    "Cuidado con amor",
+    "Respaldo veterinario",
+    "Envíos rápidos"
+  ].map((text, i) => (
+    <div key={i} style={{
+      textAlign: "center"
+    }}>
+      <p style={{
+        fontWeight: "600",
+        color: "#2f4f3e"
       }}>
-        <div>
-          <h2 style={{ fontSize: "42px", color: "#2f4f3e" }}>
-            Todo lo que tu mascota necesita
-          </h2>
-          <p style={{ color: "#666" }}>
-            Alimentos, accesorios, salud y mucho amor.
-          </p>
-        </div>
+        {text}
+      </p>
+    </div>
+  ))}
 
-        <img src="/soin-banner.png" style={{ width: "400px", borderRadius: "20px" }} />
-      </div>
-
-      {/* Productos */}
-      <div style={{ padding: "40px" }}>
-        <h3 style={{ color: "#2f4f3e", fontSize: "28px" }}>
-          Productos destacados
-        </h3>
-
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: "25px",
-          marginTop: "20px"
-        }}>
-          {products.map(p => (
-            <div
-              key={p.id}
-              onClick={() => addToCart(p)}
-              style={{
-                background: "white",
-                padding: "20px",
-                borderRadius: "20px",
-                boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
-                cursor: "pointer",
-                transition: "all 0.15s"
-              }}
-              onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.97)"}
-              onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
-              onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
-            >
-              <div style={{
-                height: "150px",
-                background: "#eee",
-                borderRadius: "12px",
-                marginBottom: "10px"
-              }}></div>
-
-              <h4 style={{ marginBottom: "5px" }}>{p.name}</h4>
-              <p style={{ color: "#777" }}>
-                ${p.price.toLocaleString()}
-              </p>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  addToCart(p);
-                }}
-                style={{
-                  width: "100%",
-                  background: "#4f7c62",
-                  color: "white",
-                  padding: "12px",
-                  borderRadius: "12px",
-                  border: "none",
-                  marginTop: "10px",
-                  cursor: "pointer",
-                  fontWeight: "600"
-                }}
-                onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.95)"}
-                onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
-              >
-                Agregar al carrito
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Overlay oscuro */}
-      {openCart && (
-        <div
-          onClick={() => setOpenCart(false)}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            background: "rgba(0,0,0,0.3)",
-            zIndex: 999
-          }}
-        />
-      )}
-
+</div>      
       {/* 🛒 Carrito Premium */}
       {openCart && (
         <div style={{
