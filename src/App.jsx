@@ -5,10 +5,8 @@ export default function App() {
 
   const [cart, setCart] = useState([]);
   const [openCart, setOpenCart] = useState(false);
-
   const [category, setCategory] = useState("Todos");
   const [petType, setPetType] = useState("Todos");
-  const [visible, setVisible] = useState(6);
 
   const products = [
     {
@@ -45,49 +43,43 @@ export default function App() {
     }
   ];
 
-  const filteredProducts = products
-    .filter(p =>
-      (category === "Todos" || p.category === category) &&
-      (petType === "Todos" || p.pet === petType)
-    )
-    .slice(0, visible);
+  const filtered = products.filter(p =>
+    (category === "Todos" || p.category === category) &&
+    (petType === "Todos" || p.pet === petType)
+  );
 
   // 🛒 lógica carrito
-  const addToCart = (product) => {
-    const existing = cart.find(i => i.id === product.id);
-
-    if (existing) {
+  const addToCart = (p) => {
+    const exist = cart.find(i => i.id === p.id);
+    if (exist) {
       setCart(cart.map(i =>
-        i.id === product.id
-          ? { ...i, quantity: i.quantity + 1 }
-          : i
+        i.id === p.id ? { ...i, quantity: i.quantity + 1 } : i
       ));
     } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
+      setCart([...cart, { ...p, quantity: 1 }]);
     }
   };
 
-  const increaseQty = id =>
+  const increase = id =>
     setCart(cart.map(i => i.id === id ? { ...i, quantity: i.quantity + 1 } : i));
 
-  const decreaseQty = id =>
+  const decrease = id =>
     setCart(cart.map(i => i.id === id ? { ...i, quantity: i.quantity - 1 } : i)
       .filter(i => i.quantity > 0));
 
-  const removeItem = id =>
+  const remove = id =>
     setCart(cart.filter(i => i.id !== id));
 
-  const total = cart.reduce((acc, i) => acc + i.price * i.quantity, 0);
-  const totalItems = cart.reduce((acc, i) => acc + i.quantity, 0);
+  const total = cart.reduce((a, i) => a + i.price * i.quantity, 0);
+  const totalItems = cart.reduce((a, i) => a + i.quantity, 0);
 
-  const chipStyle = (active) => ({
+  const chip = (active) => ({
     padding: "8px 14px",
     borderRadius: "20px",
     border: "none",
-    cursor: "pointer",
     background: active ? "#4f7c62" : "#eee",
     color: active ? "white" : "#333",
-    fontWeight: "500"
+    cursor: "pointer"
   });
 
   return (
@@ -106,16 +98,17 @@ export default function App() {
         <h2>SOIN</h2>
 
         <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
-          <a>Home</a>
-          <a>Catálogo</a>
-          <a>Contáctenos</a>
+          <span>Home</span>
+          <span>Catálogo</span>
+          <span>Contáctenos</span>
 
           <button onClick={() => setOpenCart(true)} style={{
             background: "#4f7c62",
             color: "white",
             border: "none",
-            borderRadius: "10px",
-            padding: "10px"
+            borderRadius: "12px",
+            padding: "10px 14px",
+            cursor: "pointer"
           }}>
             <ShoppingCart size={18}/> ({totalItems})
           </button>
@@ -123,7 +116,7 @@ export default function App() {
       </div>
 
       {/* HERO */}
-      <div style={{ height: "320px", overflow: "hidden" }}>
+      <div style={{ height: "320px" }}>
         <img src="/soin-banner.png" style={{
           width: "100%",
           height: "100%",
@@ -133,25 +126,19 @@ export default function App() {
 
       {/* FILTROS */}
       <div style={{ padding: "30px 40px" }}>
-
-        <h3>Categorías</h3>
-        <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
+        <h4>Categorías</h4>
+        <div style={{ display: "flex", gap: "10px" }}>
           {["Todos","Alimentos","Snacks","Accesorios","Limpieza"].map(c => (
-            <button key={c} onClick={() => setCategory(c)} style={chipStyle(category === c)}>
-              {c}
-            </button>
+            <button key={c} onClick={() => setCategory(c)} style={chip(category === c)}>{c}</button>
           ))}
         </div>
 
-        <h3>Mascota</h3>
+        <h4 style={{ marginTop: "20px" }}>Mascota</h4>
         <div style={{ display: "flex", gap: "10px" }}>
           {["Todos","Perro","Gato"].map(p => (
-            <button key={p} onClick={() => setPetType(p)} style={chipStyle(petType === p)}>
-              {p}
-            </button>
+            <button key={p} onClick={() => setPetType(p)} style={chip(petType === p)}>{p}</button>
           ))}
         </div>
-
       </div>
 
       {/* PRODUCTOS */}
@@ -161,7 +148,7 @@ export default function App() {
         gridTemplateColumns: "repeat(3, 1fr)",
         gap: "25px"
       }}>
-        {filteredProducts.map(p => (
+        {filtered.map(p => (
           <div key={p.id}
             onClick={() => addToCart(p)}
             style={{
@@ -169,18 +156,10 @@ export default function App() {
               borderRadius: "20px",
               overflow: "hidden",
               cursor: "pointer",
-              transition: "0.2s",
               boxShadow: "0 10px 20px rgba(0,0,0,0.05)"
             }}
-            onMouseDown={e => e.currentTarget.style.transform = "scale(0.97)"}
-            onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
           >
-
-            <img src={p.img} style={{
-              width: "100%",
-              height: "200px",
-              objectFit: "cover"
-            }} />
+            <img src={p.img} style={{ width: "100%", height: "200px", objectFit: "cover" }} />
 
             <div style={{ padding: "15px" }}>
               <h4>{p.name}</h4>
@@ -197,7 +176,8 @@ export default function App() {
                   color: "white",
                   border: "none",
                   borderRadius: "10px",
-                  padding: "10px"
+                  padding: "10px",
+                  cursor: "pointer"
                 }}
               >
                 Agregar
@@ -207,63 +187,94 @@ export default function App() {
         ))}
       </div>
 
-      {/* PAGINACIÓN */}
-      <div style={{ textAlign: "center", marginBottom: "40px" }}>
-        <button onClick={() => setVisible(visible + 3)} style={{
-          padding: "10px 20px",
-          borderRadius: "10px",
-          border: "none",
-          background: "#ddd"
-        }}>
-          Ver más
-        </button>
-      </div>
-
-      {/* 🛒 CARRITO */}
+      {/* OVERLAY */}
       {openCart && (
-        <div style={{
-          position: "fixed",
-          right: 0,
-          top: 0,
-          width: "380px",
-          height: "100%",
-          background: "white",
-          boxShadow: "-10px 0 30px rgba(0,0,0,0.1)",
-          padding: "20px",
-          display: "flex",
-          flexDirection: "column"
-        }}>
-          <X onClick={() => setOpenCart(false)} />
-
-          <div style={{ flex: 1, overflowY: "auto" }}>
-            {cart.map(item => (
-              <div key={item.id} style={{ marginBottom: "15px" }}>
-                <p>{item.name}</p>
-
-                <button onClick={() => decreaseQty(item.id)}>-</button>
-                {item.quantity}
-                <button onClick={() => increaseQty(item.id)}>+</button>
-
-                <p>${(item.price * item.quantity).toLocaleString()}</p>
-
-                <button onClick={() => removeItem(item.id)}>❌</button>
-              </div>
-            ))}
-          </div>
-
-          <h3>Total: ${total.toLocaleString()}</h3>
-        </div>
+        <div
+          onClick={() => setOpenCart(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0,0,0,0.4)",
+            zIndex: 200
+          }}
+        />
       )}
 
-      {/* FOOTER */}
+      {/* 🛒 CARRITO PREMIUM */}
       <div style={{
-        background: "#2f4f3e",
-        color: "white",
-        padding: "40px",
-        textAlign: "center"
+        position: "fixed",
+        top: 0,
+        right: openCart ? 0 : "-400px",
+        width: "400px",
+        height: "100%",
+        background: "#fff",
+        boxShadow: "-10px 0 30px rgba(0,0,0,0.1)",
+        zIndex: 300,
+        transition: "0.3s",
+        display: "flex",
+        flexDirection: "column"
       }}>
-        <p>© SOIN - Todos los derechos reservados</p>
-        <p>Políticas de privacidad | Términos y condiciones</p>
+
+        {/* Header */}
+        <div style={{
+          padding: "20px",
+          borderBottom: "1px solid #eee",
+          display: "flex",
+          justifyContent: "space-between"
+        }}>
+          <h3>Tu carrito</h3>
+          <X onClick={() => setOpenCart(false)} style={{ cursor: "pointer" }} />
+        </div>
+
+        {/* Items */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
+          {cart.map(item => (
+            <div key={item.id} style={{
+              marginBottom: "20px",
+              borderBottom: "1px solid #eee",
+              paddingBottom: "10px"
+            }}>
+              <strong>{item.name}</strong>
+
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: "8px"
+              }}>
+                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                  <button onClick={() => decrease(item.id)}>−</button>
+                  {item.quantity}
+                  <button onClick={() => increase(item.id)}>+</button>
+                </div>
+
+                <span>${(item.price * item.quantity).toLocaleString()}</span>
+
+                <button onClick={() => remove(item.id)}>❌</button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "20px", borderTop: "1px solid #eee" }}>
+          <h3>Total: ${total.toLocaleString()}</h3>
+
+          <button style={{
+            width: "100%",
+            marginTop: "10px",
+            padding: "12px",
+            background: "#4f7c62",
+            color: "white",
+            borderRadius: "10px",
+            border: "none"
+          }}>
+            Finalizar compra
+          </button>
+        </div>
       </div>
 
     </div>
