@@ -57,6 +57,16 @@ export default function App() {
   const total = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
 
+  const qtyBtn = {
+  width: "28px",
+  height: "28px",
+  borderRadius: "50%",
+  border: "1px solid #ddd",
+  background: "white",
+  cursor: "pointer",
+  fontWeight: "bold"
+};
+
   return (
     <div style={{ fontFamily: "Arial", background: "#f7f5f2", minHeight: "100vh" }}>
       
@@ -165,93 +175,150 @@ export default function App() {
 
       {/* 🛒 Carrito */}
       {openCart && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          right: 0,
-          width: "350px",
-          height: "100%",
-          background: "white",
-          boxShadow: "-5px 0 15px rgba(0,0,0,0.1)",
-          padding: "20px",
-          display: "flex",
-          flexDirection: "column"
-        }}>
-          
-          {/* Header */}
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <h3>Tu carrito</h3>
-            <X onClick={() => setOpenCart(false)} style={{ cursor: "pointer" }}/>
-          </div>
+  <div style={{
+    position: "fixed",
+    top: 0,
+    right: 0,
+    width: "380px",
+    height: "100%",
+    background: "#fdfdfd",
+    boxShadow: "-10px 0 30px rgba(0,0,0,0.08)",
+    display: "flex",
+    flexDirection: "column",
+    zIndex: 1000
+  }}>
 
-          {/* Scroll */}
-          <div style={{ flex: 1, overflowY: "auto", marginTop: "10px" }}>
-            {cart.length === 0 ? (
-              <p>Tu carrito está vacío</p>
-            ) : (
-              cart.map(item => (
-                <div key={item.id} style={{
-                  borderBottom: "1px solid #eee",
-                  padding: "10px 0"
-                }}>
-                  <p style={{ fontWeight: "bold" }}>{item.name}</p>
+    {/* Header */}
+    <div style={{
+      padding: "20px",
+      borderBottom: "1px solid #eee",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }}>
+      <h3 style={{ margin: 0, color: "#2f4f3e" }}>Tu carrito</h3>
 
-                  <div style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginTop: "5px"
-                  }}>
-                    
-                    {/* Controles */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <button onClick={() => decreaseQty(item.id)}>-</button>
-                      <span>{item.quantity}</span>
-                      <button onClick={() => increaseQty(item.id)}>+</button>
-                    </div>
-
-                    {/* Precio */}
-                    <p>${(item.price * item.quantity).toLocaleString()}</p>
-
-                    {/* Eliminar */}
-                    <button 
-                      onClick={() => removeItem(item.id)}
-                      style={{
-                        color: "red",
-                        border: "none",
-                        background: "none",
-                        cursor: "pointer"
-                      }}
-                    >
-                      ❌
-                    </button>
-
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Footer */}
-          <div>
-            <h4>Total: ${total.toLocaleString()}</h4>
-
-            <button style={{
-              width: "100%",
-              marginTop: "10px",
-              background: "#4f7c62",
-              color: "white",
-              padding: "12px",
-              borderRadius: "10px",
-              border: "none"
-            }}>
-              Finalizar compra
-            </button>
-          </div>
-
-        </div>
-      )}
-
+      <X 
+        onClick={() => setOpenCart(false)} 
+        style={{ cursor: "pointer" }}
+      />
     </div>
-  );
-}
+
+    {/* Lista */}
+    <div style={{
+      flex: 1,
+      overflowY: "auto",
+      padding: "20px"
+    }}>
+      {cart.length === 0 ? (
+        <p style={{ color: "#777" }}>Tu carrito está vacío</p>
+      ) : (
+        cart.map(item => (
+          <div key={item.id} style={{
+            background: "white",
+            padding: "15px",
+            borderRadius: "15px",
+            marginBottom: "15px",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.04)"
+          }}>
+
+            <p style={{
+              fontWeight: "600",
+              marginBottom: "10px",
+              color: "#2f4f3e"
+            }}>
+              {item.name}
+            </p>
+
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center"
+            }}>
+
+              {/* Cantidad */}
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px"
+              }}>
+
+                <button 
+                  onClick={() => decreaseQty(item.id)}
+                  style={qtyBtn}
+                >
+                  −
+                </button>
+
+                <span style={{ fontWeight: "500" }}>
+                  {item.quantity}
+                </span>
+
+                <button 
+                  onClick={() => increaseQty(item.id)}
+                  style={qtyBtn}
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Precio */}
+              <p style={{
+                fontWeight: "600",
+                color: "#333"
+              }}>
+                ${(item.price * item.quantity).toLocaleString()}
+              </p>
+
+              {/* Eliminar */}
+              <button 
+                onClick={() => removeItem(item.id)}
+                style={{
+                  background: "#ffe5e5",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "5px 8px",
+                  cursor: "pointer"
+                }}
+              >
+                ❌
+              </button>
+
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+
+    {/* Footer */}
+    <div style={{
+      padding: "20px",
+      borderTop: "1px solid #eee"
+    }}>
+      <h3 style={{
+        marginBottom: "10px",
+        color: "#2f4f3e"
+      }}>
+        Total: ${total.toLocaleString()}
+      </h3>
+
+      <button style={{
+        width: "100%",
+        background: "#4f7c62",
+        color: "white",
+        padding: "14px",
+        borderRadius: "12px",
+        border: "none",
+        fontWeight: "600",
+        cursor: "pointer",
+        transition: "0.2s"
+      }}
+      onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.97)"}
+      onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
+      >
+        Finalizar compra
+      </button>
+    </div>
+
+  </div>
+)}
