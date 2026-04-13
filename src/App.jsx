@@ -22,6 +22,7 @@ export default function App() {
   const [filterPet, setFilterPet] = useState("Todos");
   const [filterCat, setFilterCat] = useState("Todos");
   const [searchQuery, setSearchQuery] = useState("");
+  const [shippingZone, setShippingZone] = useState(""); // Nuevo estado obligatorio
 
   const products = [
     { id: 1, name: "Alimento Premium Perro", price: 85000, category: "Alimentos", pet: "Perro", featured: true, img: "https://images.unsplash.com/photo-1589927986089-35812388d1f4" },
@@ -31,6 +32,12 @@ export default function App() {
     { id: 5, name: "Juguete Goma Perro", price: 15000, category: "Accesorios", pet: "Perro", featured: false, img: "https://images.unsplash.com/photo-1576201836106-db1758fd1c97" },
     { id: 6, name: "Shampoo Mascotas", price: 32000, category: "Limpieza", pet: "Todos", featured: false, img: "https://images.unsplash.com/photo-1583947581924-860bda6a26df" }
   ];
+
+  const shippingOptions = {
+    "Zona Sur": 15000,
+    "Zona Norte": 25000,
+    "Resto del País": 0
+  };
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
@@ -54,8 +61,19 @@ export default function App() {
   };
 
   const removeItem = (id) => setCart(curr => curr.filter(i => i.id !== id));
+  
   const subtotal = cart.reduce((a, i) => a + i.price * i.quantity, 0);
-  const shipping = subtotal > 100000 ? 0 : 12000;
+  const currentShippingCost = shippingZone ? shippingOptions[shippingZone] : 0;
+
+  const handleCheckout = () => {
+    const message = cart.map(i => `- ${i.name} x${i.quantity} ($${(i.price * i.quantity).toLocaleString()})`).join("%0A");
+    const totalMsg = (subtotal + currentShippingCost).toLocaleString();
+    const shippingMsg = shippingZone === "Resto del País" ? "Sujeto a verificación" : `$${currentShippingCost.toLocaleString()}`;
+    
+    const whatsappUrl = `https://wa.me/573158429286?text=¡Hola SOIN! 🐾%0AQuiero realizar un pedido:%0A%0A${message}%0A%0A*Subtotal:* $${subtotal.toLocaleString()}%0A*Zona de Envío:* ${shippingZone}%0A*Costo Envío:* ${shippingMsg}%0A*TOTAL:* $${totalMsg}`;
+    
+    window.open(whatsappUrl, "_blank");
+  };
 
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", background: COLORS.background, minHeight: "100vh", color: COLORS.text }}>
@@ -69,12 +87,14 @@ export default function App() {
         .btn-filter.active { background: ${COLORS.primary}; color: white; border-color: ${COLORS.primary}; }
         .card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.3s; }
         .card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
+        .shipping-opt { padding: 12px; border: 1px solid ${COLORS.lightGray}; border-radius: 12px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; font-size: 13px; transition: 0.2s; }
+        .shipping-opt.selected { border-color: ${COLORS.primary}; background: #f0f7f3; font-weight: 600; }
       `}</style>
 
       {/* NAVBAR */}
       <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 5%", background: "white", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 10px rgba(0,0,0,0.04)" }}>
         <img 
-          src="/Logo.png" 
+          src="/Logo sin Fondo.jpg" 
           alt="SOIN Logo" 
           style={{ height: "42px", cursor: "pointer" }} 
           onClick={() => setView("inicio")} 
@@ -89,13 +109,12 @@ export default function App() {
         </div>
       </nav>
 
-      {/* VISTA INICIO */}
-      {view === "inicio" && (
+      {/* VISTAS (INICIO / CATALOGO) */}
+      {view === "inicio" ? (
         <>
           <div style={{ width: "100%", height: "280px", overflow: "hidden" }}>
-            <img src="/soin-banner.png" style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="Banner Principal" />
+            <img src="/Banner.jpg" style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="Banner Principal" />
           </div>
-          
           <div style={{ padding: "40px 15px", textAlign: "center" }}>
             <h2 style={{ fontSize: "1.6rem", fontWeight: "700", marginBottom: "30px", color: COLORS.primary }}>Selección Especial</h2>
             <div className="product-grid">
@@ -112,10 +131,7 @@ export default function App() {
             <button onClick={() => setView("catalogo")} className="active-effect" style={{ marginTop: "35px", width: "80%", maxWidth: "300px", padding: "16px", background: COLORS.secondary, border: "none", borderRadius: "30px", color: "white", fontWeight: "800", letterSpacing: "1px" }}>VER TODO EL CATÁLOGO</button>
           </div>
         </>
-      )}
-
-      {/* VISTA CATÁLOGO */}
-      {view === "catalogo" && (
+      ) : (
         <main style={{ paddingBottom: "40px" }}>
           <div style={{ padding: "20px 5% 10px" }}>
             <div style={{ position: "relative" }}>
@@ -127,7 +143,6 @@ export default function App() {
               />
             </div>
           </div>
-
           <div className="filter-scroll">
             {["Todos", "Perro", "Gato"].map(p => (
               <button key={p} onClick={() => setFilterPet(p)} className={`btn-filter active-effect ${filterPet === p ? 'active' : ''}`}>{p}</button>
@@ -138,7 +153,6 @@ export default function App() {
               <button key={c} onClick={() => setFilterCat(c)} className={`btn-filter active-effect ${filterCat === c ? 'active' : ''}`}>{c}</button>
             ))}
           </div>
-
           <div className="product-grid">
             {filteredProducts.map(p => (
               <div key={p.id} className="card" style={{ display: "flex", flexDirection: "column" }}>
@@ -161,39 +175,16 @@ export default function App() {
         </main>
       )}
 
-      {/* FOOTER VERDE PROFESIONAL */}
+      {/* FOOTER */}
       <footer style={{ background: COLORS.primary, padding: "50px 5% 30px", color: "white" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <div style={{ marginBottom: "40px" }}>
-            <img src="/Logo.png" alt="Logo White" style={{ height: "45px", marginBottom: "20px", filter: "brightness(0) invert(1)" }} />
-            <p style={{ fontSize: "14px", opacity: 0.9, lineHeight: "1.6", maxWidth: "400px" }}>Cuidamos lo que más quieres. Productos de alta calidad seleccionados especialmente para el bienestar de tus compañeros.</p>
+            <img src="/Logo sin Fondo.jpg" alt="Logo White" style={{ height: "45px", marginBottom: "20px", filter: "brightness(0) invert(1)" }} />
+            <p style={{ fontSize: "14px", opacity: 0.9 }}>Cuidamos lo que más quieres. Productos de alta calidad seleccionados especialmente.</p>
           </div>
-          
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "30px", marginBottom: "40px" }}>
-            <div>
-              <h5 style={{ fontSize: "15px", fontWeight: "700", marginBottom: "15px", color: COLORS.secondary }}>LEGALES</h5>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "13px", opacity: 0.8 }}>
-                <span>Términos y Condiciones</span>
-                <span>Política de Calidad</span>
-                <span>Tratamiento de Datos</span>
-              </div>
-            </div>
-            <div>
-              <h5 style={{ fontSize: "15px", fontWeight: "700", marginBottom: "15px", color: COLORS.secondary }}>AYUDA</h5>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "13px", opacity: 0.8 }}>
-                <span>Preguntas Frecuentes</span>
-                <span>Envíos y Entregas</span>
-                <span>Cambios y Garantías</span>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ textAlign: "center", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "30px" }}>
-            <div style={{ display: "flex", justifyContent: "center", gap: "20px", marginBottom: "20px", opacity: 0.7 }}>
-              <CreditCard size={22} /> <ShieldCheck size={22} /> <Truck size={22} />
-            </div>
-            <p style={{ fontSize: "11px", opacity: 0.6 }}>© 2026 SOIN Medellín - Expertos en Mascotas. Todos los derechos reservados.</p>
-          </div>
+          <p style={{ textAlign: "center", fontSize: "11px", opacity: 0.6, borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "30px" }}>
+            © 2026 SOIN Medellín - Todos los derechos reservados.
+          </p>
         </div>
       </footer>
 
@@ -201,12 +192,9 @@ export default function App() {
       {openCart && (
         <>
           <div onClick={() => setOpenCart(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, backdropFilter: "blur(4px)" }} />
-          <aside style={{ position: "fixed", top: 0, right: 0, width: "min(400px, 92%)", height: "100%", background: "white", zIndex: 1001, display: "flex", flexDirection: "column", boxShadow: "-10px 0 40px rgba(0,0,0,0.1)" }}>
+          <aside style={{ position: "fixed", top: 0, right: 0, width: "min(400px, 92%)", height: "100%", background: "white", zIndex: 1001, display: "flex", flexDirection: "column" }}>
             <div style={{ padding: "25px 20px", borderBottom: `1px solid ${COLORS.lightGray}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <ShoppingCart size={22} color={COLORS.primary} />
-                <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: "700" }}>Tu Pedido</h3>
-              </div>
+              <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: "700" }}>Tu Pedido</h3>
               <X onClick={() => setOpenCart(false)} className="active-effect" style={{ cursor: "pointer" }} />
             </div>
 
@@ -214,56 +202,84 @@ export default function App() {
               {cart.length === 0 ? (
                 <div style={{ textAlign: "center", marginTop: "60px", opacity: 0.3 }}>
                   <ShoppingCart size={60} style={{ margin: "0 auto 20px" }} />
-                  <p style={{ fontSize: "1.1rem" }}>No hay nada por aquí...</p>
+                  <p>El carrito está vacío</p>
                 </div>
               ) : (
                 <>
-                  <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "15px" }}>
-                    <button onClick={() => {if(window.confirm("¿Vaciar el carrito?")) setCart([])}} style={{ background: "none", border: "none", color: COLORS.danger, fontSize: "11px", fontWeight: "700", display: "flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
-                      <Trash2 size={14} /> LIMPIAR TODO
-                    </button>
-                  </div>
                   {cart.map(item => (
-                    <div key={item.id} style={{ display: "flex", gap: "15px", marginBottom: "25px", background: "#fcfcfc", padding: "10px", borderRadius: "15px" }}>
-                      <img src={item.img} style={{ width: "70px", height: "70px", borderRadius: "10px", objectFit: "cover" }} />
+                    <div key={item.id} style={{ display: "flex", gap: "15px", marginBottom: "20px" }}>
+                      <img src={item.img} style={{ width: "60px", height: "60px", borderRadius: "10px", objectFit: "cover" }} />
                       <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                          <h4 style={{ fontSize: "13px", fontWeight: "600", margin: 0 }}>{item.name}</h4>
-                          <button onClick={() => removeItem(item.id)} style={{ border: "none", background: "none", padding: "2px", color: "#ccc" }}><X size={16} /></button>
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                          <h4 style={{ fontSize: "13px", margin: 0 }}>{item.name}</h4>
+                          <button onClick={() => removeItem(item.id)} style={{ border: "none", background: "none", color: "#ccc" }}><Trash2 size={14} /></button>
                         </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "15px", background: "white", padding: "5px 12px", borderRadius: "20px", border: `1px solid ${COLORS.lightGray}` }}>
-                            <Minus size={14} className="active-effect" onClick={() => updateQuantity(item.id, -1)} />
-                            <span style={{ fontSize: "14px", fontWeight: "700" }}>{item.quantity}</span>
-                            <Plus size={14} className="active-effect" onClick={() => updateQuantity(item.id, 1)} />
+                        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            <Minus size={14} onClick={() => updateQuantity(item.id, -1)} />
+                            <span style={{ fontWeight: "700" }}>{item.quantity}</span>
+                            <Plus size={14} onClick={() => updateQuantity(item.id, 1)} />
                           </div>
-                          <span style={{ fontWeight: "800", color: COLORS.primary }}>${(item.price * item.quantity).toLocaleString()}</span>
+                          <span style={{ fontWeight: "700" }}>${(item.price * item.quantity).toLocaleString()}</span>
                         </div>
                       </div>
                     </div>
                   ))}
+
+                  {/* SECCIÓN DE ENVÍO OBLIGATORIA */}
+                  <div style={{ marginTop: "30px", borderTop: `1px solid ${COLORS.lightGray}`, paddingTop: "20px" }}>
+                    <h4 style={{ fontSize: "14px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <Truck size={18} color={COLORS.primary} /> Selecciona Zona de Envío:
+                    </h4>
+                    {Object.entries(shippingOptions).map(([zone, cost]) => (
+                      <div 
+                        key={zone} 
+                        className={`shipping-opt ${shippingZone === zone ? 'selected' : ''}`}
+                        onClick={() => setShippingZone(zone)}
+                      >
+                        <span>{zone}</span>
+                        <span>{zone === "Resto del País" ? "Por confirmar" : `$${cost.toLocaleString()}`}</span>
+                      </div>
+                    ))}
+                  </div>
                 </>
               )}
             </div>
 
             {cart.length > 0 && (
               <div style={{ padding: "25px 20px", background: "#fdfdfd", borderTop: `1px solid ${COLORS.lightGray}` }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "25px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", opacity: 0.7 }}>
-                    <span>Subtotal</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "20px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px" }}>
+                    <span>Subtotal:</span>
                     <span>${subtotal.toLocaleString()}</span>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", opacity: 0.7 }}>
-                    <span>Envío</span>
-                    <span>{shipping === 0 ? "Gratis" : `$${shipping.toLocaleString()}`}</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px" }}>
+                    <span>Envío:</span>
+                    <span>{shippingZone === "" ? "Pendiente" : shippingZone === "Resto del País" ? "Sujeto a verificación" : `$${currentShippingCost.toLocaleString()}`}</span>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "20px", fontWeight: "800", color: COLORS.primary, marginTop: "10px" }}>
-                    <span>Total a pagar</span>
-                    <span>${(subtotal + shipping).toLocaleString()}</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "18px", fontWeight: "800", color: COLORS.primary, marginTop: "8px" }}>
+                    <span>Total:</span>
+                    <span>${(subtotal + currentShippingCost).toLocaleString()}</span>
                   </div>
                 </div>
-                <button className="active-effect" style={{ width: "100%", background: COLORS.primary, color: "white", border: "none", borderRadius: "16px", padding: "18px", fontWeight: "800", fontSize: "16px", boxShadow: "0 10px 20px rgba(79, 124, 98, 0.2)" }}>
-                  FINALIZAR COMPRA
+                
+                <button 
+                  onClick={handleCheckout}
+                  disabled={!shippingZone}
+                  className="active-effect" 
+                  style={{ 
+                    width: "100%", 
+                    background: shippingZone ? COLORS.primary : "#ccc", 
+                    color: "white", 
+                    border: "none", 
+                    borderRadius: "16px", 
+                    padding: "18px", 
+                    fontWeight: "800", 
+                    fontSize: "16px",
+                    cursor: shippingZone ? "pointer" : "not-allowed"
+                  }}
+                >
+                  {!shippingZone ? "ELIGE ZONA DE ENVÍO" : "FINALIZAR COMPRA"}
                 </button>
               </div>
             )}
@@ -271,7 +287,7 @@ export default function App() {
         </>
       )}
 
-      {/* WHATSAPP */}
+      {/* WHATSAPP FLOTANTE */}
       <a 
         href="https://wa.me/573158429286" 
         target="_blank" 
