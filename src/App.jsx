@@ -1,9 +1,10 @@
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, X } from "lucide-react";
 import { useState } from "react";
 
 export default function App() {
 
   const [cart, setCart] = useState([]);
+  const [openCart, setOpenCart] = useState(false);
 
   const products = [
     { id: 1, name: "Alimento Premium", price: 85000 },
@@ -14,6 +15,8 @@ export default function App() {
   const addToCart = (product) => {
     setCart([...cart, product]);
   };
+
+  const total = cart.reduce((acc, item) => acc + item.price, 0);
 
   return (
     <div style={{ fontFamily: "Arial", background: "#f7f5f2", minHeight: "100vh" }}>
@@ -26,15 +29,18 @@ export default function App() {
       }}>
         <h1 style={{ color: "#2f4f3e" }}>SOIN</h1>
 
-        <button style={{
-          background: "#4f7c62",
-          color: "white",
-          padding: "10px 15px",
-          borderRadius: "10px",
-          border: "none",
-          display: "flex",
-          gap: "5px"
-        }}>
+        <button 
+          onClick={() => setOpenCart(true)}
+          style={{
+            background: "#4f7c62",
+            color: "white",
+            padding: "10px 15px",
+            borderRadius: "10px",
+            border: "none",
+            display: "flex",
+            gap: "5px"
+          }}
+        >
           <ShoppingCart size={18}/> ({cart.length})
         </button>
       </div>
@@ -110,6 +116,68 @@ export default function App() {
           ))}
         </div>
       </div>
+
+      {/* 🛒 PANEL DEL CARRITO */}
+      {openCart && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          right: 0,
+          width: "350px",
+          height: "100%",
+          background: "white",
+          boxShadow: "-5px 0 15px rgba(0,0,0,0.1)",
+          padding: "20px",
+          zIndex: 1000
+        }}>
+          
+          {/* Header */}
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: "20px"
+          }}>
+            <h3>Tu carrito</h3>
+            <X onClick={() => setOpenCart(false)} style={{ cursor: "pointer" }}/>
+          </div>
+
+          {/* Items */}
+          {cart.length === 0 ? (
+            <p>Tu carrito está vacío</p>
+          ) : (
+            <div>
+              {cart.map((item, index) => (
+                <div key={index} style={{
+                  borderBottom: "1px solid #eee",
+                  padding: "10px 0"
+                }}>
+                  <p>{item.name}</p>
+                  <p>${item.price.toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Total */}
+          <div style={{ marginTop: "20px" }}>
+            <h4>Total: ${total.toLocaleString()}</h4>
+          </div>
+
+          {/* Checkout */}
+          <button style={{
+            width: "100%",
+            marginTop: "20px",
+            background: "#4f7c62",
+            color: "white",
+            padding: "12px",
+            borderRadius: "10px",
+            border: "none"
+          }}>
+            Finalizar compra
+          </button>
+
+        </div>
+      )}
 
     </div>
   );
