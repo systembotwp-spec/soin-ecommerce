@@ -821,7 +821,6 @@ export default function App() {
 
           {/* Texto hero — SOLO móvil (≤640px), fuera del hero para no superponerse */}
           <div className="hero-text-mobile">
-            <div className="hero-eyebrow" style={{ marginBottom:10 }}>🌿 Colección 2025</div>
             <h1 className="hero-title" style={{ fontSize:26 }}>
               Todo lo que tu mascota <em>necesita,</em> en un solo lugar.
             </h1>
