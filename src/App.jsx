@@ -64,7 +64,7 @@ export default function App() {
 
       {/* NAVBAR */}
       <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 5%", background: "white", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 5px rgba(0,0,0,0.05)" }}>
-        <img src="/Logo sin Fondo.jpg" alt="SOIN" style={{ height: "35px", cursor: "pointer" }} onClick={() => setView("inicio")} className="active-effect" />
+        <img src="/Logo.png" alt="SOIN" style={{ height: "35px", cursor: "pointer" }} onClick={() => setView("inicio")} className="active-effect" />
         <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
           <span onClick={() => setView("catalogo")} className="active-effect" style={{ fontSize: "14px", fontWeight: view === "catalogo" ? "bold" : "500" }}>Tienda</span>
           <button onClick={() => setOpenCart(true)} className="active-effect" style={{ background: COLORS.primary, color: "white", border: "none", borderRadius: "10px", padding: "8px 12px", position: "relative" }}>
@@ -77,7 +77,7 @@ export default function App() {
       {/* VISTA INICIO */}
       {view === "inicio" && (
         <>
-          <img src="/Banner.jpg" style={{ width: "100%", height: "250px", objectFit: "cover" }} alt="Banner" />
+          <img src="/soin-banner.png" style={{ width: "100%", height: "250px", objectFit: "cover" }} alt="Banner" />
           <div style={{ padding: "25px 15px", textAlign: "center" }}>
             <h2 style={{ fontSize: "1.4rem", color: COLORS.primary, marginBottom: "20px" }}>Favoritos</h2>
             <div className="product-grid">
