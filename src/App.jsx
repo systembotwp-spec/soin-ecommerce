@@ -77,7 +77,7 @@ export default function App() {
       {/* NAVBAR PROFESIONAL */}
       <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 5%", background: "white", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 10px rgba(0,0,0,0.04)" }}>
         <img 
-          src="/Logo sin Fondo.jpg" 
+          src="/Logo.png" 
           alt="SOIN Logo" 
           style={{ height: "40px", cursor: "pointer" }} 
           onClick={() => setView("inicio")} 
@@ -96,7 +96,7 @@ export default function App() {
       {view === "inicio" && (
         <>
           <div style={{ position: "relative", height: "300px", overflow: "hidden" }}>
-            <img src="/soin-banner." style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="Ofertas" />
+            <img src="/soin-banner.png" style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="Ofertas" />
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.4))", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", color: "white" }}>
               <h1 style={{ fontSize: "2rem", textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>Cuidado con Amor</h1>
               <button onClick={() => setView("catalogo")} className="active-effect" style={{ marginTop: "15px", padding: "12px 25px", background: COLORS.secondary, border: "none", borderRadius: "30px", color: "white", fontWeight: "700" }}>COMPRAR AHORA</button>
