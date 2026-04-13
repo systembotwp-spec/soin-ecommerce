@@ -12,6 +12,7 @@ export default function App() {
     { id: 3, name: "Kit Higiene", price: 45000 },
   ];
 
+  // 🛒 Agregar o sumar producto
   const addToCart = (product) => {
     const existing = cart.find(item => item.id === product.id);
 
@@ -26,6 +27,33 @@ export default function App() {
     }
   };
 
+  // ➕ aumentar cantidad
+  const increaseQty = (id) => {
+    setCart(cart.map(item =>
+      item.id === id
+        ? { ...item, quantity: item.quantity + 1 }
+        : item
+    ));
+  };
+
+  // ➖ disminuir cantidad
+  const decreaseQty = (id) => {
+    setCart(cart
+      .map(item =>
+        item.id === id
+          ? { ...item, quantity: item.quantity - 1 }
+          : item
+      )
+      .filter(item => item.quantity > 0)
+    );
+  };
+
+  // ❌ eliminar producto
+  const removeItem = (id) => {
+    setCart(cart.filter(item => item.id !== id));
+  };
+
+  // 💰 totales
   const total = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -107,15 +135,27 @@ export default function App() {
                 ${p.price.toLocaleString()}
               </p>
 
-              <button style={{
-                width: "100%",
-                background: "#4f7c62",
-                color: "white",
-                padding: "10px",
-                borderRadius: "10px",
-                border: "none",
-                marginTop: "10px"
-              }}>
+              {/* Botón con efecto */}
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addToCart(p);
+                }}
+                style={{
+                  width: "100%",
+                  background: "#4f7c62",
+                  color: "white",
+                  padding: "10px",
+                  borderRadius: "10px",
+                  border: "none",
+                  marginTop: "10px",
+                  cursor: "pointer",
+                  transition: "transform 0.1s"
+                }}
+                onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.95)"}
+                onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
+                onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+              >
                 Agregar al carrito
               </button>
             </div>
@@ -123,7 +163,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Carrito */}
+      {/* 🛒 Carrito */}
       {openCart && (
         <div style={{
           position: "fixed",
@@ -138,6 +178,7 @@ export default function App() {
           flexDirection: "column"
         }}>
           
+          {/* Header */}
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <h3>Tu carrito</h3>
             <X onClick={() => setOpenCart(false)} style={{ cursor: "pointer" }}/>
@@ -153,9 +194,39 @@ export default function App() {
                   borderBottom: "1px solid #eee",
                   padding: "10px 0"
                 }}>
-                  <p>{item.name}</p>
-                  <p>Cantidad: {item.quantity}</p>
-                  <p>${(item.price * item.quantity).toLocaleString()}</p>
+                  <p style={{ fontWeight: "bold" }}>{item.name}</p>
+
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginTop: "5px"
+                  }}>
+                    
+                    {/* Controles */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <button onClick={() => decreaseQty(item.id)}>-</button>
+                      <span>{item.quantity}</span>
+                      <button onClick={() => increaseQty(item.id)}>+</button>
+                    </div>
+
+                    {/* Precio */}
+                    <p>${(item.price * item.quantity).toLocaleString()}</p>
+
+                    {/* Eliminar */}
+                    <button 
+                      onClick={() => removeItem(item.id)}
+                      style={{
+                        color: "red",
+                        border: "none",
+                        background: "none",
+                        cursor: "pointer"
+                      }}
+                    >
+                      ❌
+                    </button>
+
+                  </div>
                 </div>
               ))
             )}
