@@ -94,7 +94,7 @@ export default function App() {
       {/* NAVBAR */}
       <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 5%", background: "white", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 10px rgba(0,0,0,0.04)" }}>
         <img 
-          src="/Logo sin Fondo.jpg" 
+          src="/Logo.png" 
           alt="SOIN Logo" 
           style={{ height: "42px", cursor: "pointer" }} 
           onClick={() => setView("inicio")} 
@@ -113,7 +113,7 @@ export default function App() {
       {view === "inicio" ? (
         <>
           <div style={{ width: "100%", height: "280px", overflow: "hidden" }}>
-            <img src="/Banner.jpg" style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="Banner Principal" />
+            <img src="/soin-banner.png" style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="Banner Principal" />
           </div>
           <div style={{ padding: "40px 15px", textAlign: "center" }}>
             <h2 style={{ fontSize: "1.6rem", fontWeight: "700", marginBottom: "30px", color: COLORS.primary }}>Selección Especial</h2>
@@ -179,7 +179,7 @@ export default function App() {
       <footer style={{ background: COLORS.primary, padding: "50px 5% 30px", color: "white" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <div style={{ marginBottom: "40px" }}>
-            <img src="/Logo sin Fondo.jpg" alt="Logo White" style={{ height: "45px", marginBottom: "20px", filter: "brightness(0) invert(1)" }} />
+            <img src="/Logo.png" alt="Logo White" style={{ height: "45px", marginBottom: "20px", filter: "brightness(0) invert(1)" }} />
             <p style={{ fontSize: "14px", opacity: 0.9 }}>Cuidamos lo que más quieres. Productos de alta calidad seleccionados especialmente.</p>
           </div>
           <p style={{ textAlign: "center", fontSize: "11px", opacity: 0.6, borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "30px" }}>
