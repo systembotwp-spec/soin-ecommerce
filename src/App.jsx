@@ -519,8 +519,7 @@ export default function App() {
             <img src="/soin-banner.png" alt="SOIN — Todo lo que tu mascota necesita" />
             <div className="hero-overlay">
               <div className="hero-text">
-                <div className="hero-eyebrow">🌿 Colección 2025</div>
-                <h1 className="hero-title">
+               <h1 className="hero-title">
                   Todo lo que tu<br />mascota <em>necesita,</em><br />en un solo lugar.
                 </h1>
                 <p className="hero-sub">Alimentos · Accesorios · Salud · Higiene · Y mucho amor</p>
