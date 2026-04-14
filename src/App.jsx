@@ -943,14 +943,6 @@ export default function App() {
             </p>
           </div>
           <div className="footer-col">
-            <h4>Tienda</h4>
-            <ul>
-              {["Perros","Gatos","Alimentos Nutritivos","Accesorios","Salud y Bienestar"].map(l => (
-                <li key={l}><a href="#">{l}</a></li>
-              ))}
-            </ul>
-          </div>
-          <div className="footer-col">
             <h4>Soporte</h4>
             <ul>
               {["Centro de ayuda","Política de envíos","Devoluciones","WhatsApp","Contacto"].map(l => (
