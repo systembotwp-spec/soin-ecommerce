@@ -23,32 +23,36 @@ const C = {
 };
 
 /*
- * SISTEMA TIPOGRÁFICO SOIN
+ * SISTEMA TIPOGRÁFICO SOIN — v2 (redondo y orgánico)
  * ─────────────────────────────────────────────────────────
- * DISPLAY → Playfair Display  titulares, énfasis en cursiva
- *           400 normal · 600 semibold · italic 400
+ * DISPLAY → Fraunces   titulares, nombres, precios
+ *           100..900 · italic · Variable font
+ *           Carácter: serif suave con terminaciones redondas,
+ *           muy cercano al espíritu del banner SOIN.
  *
- * BODY    → DM Sans            UI, etiquetas, precios, botones
- *           300 light · 400 regular · 500 medium · 600 semibold
+ * BODY    → Nunito     UI, etiquetas, botones, párrafos
+ *           300..800 · Variable font
+ *           Sans-serif con puntas redondeadas en cada trazo,
+ *           amigable y legible en todos los tamaños.
  *
- * ESCALA:
- *   Hero title   clamp(30px,5vw,56px)  Playfair 400
- *   Section h2   clamp(26px,3vw,40px)  Playfair 400
- *   Card name    18px                  Playfair 400
- *   Price big    22px                  Playfair 600  ← valores numéricos
- *   Price small  17px                  Playfair 600  ← valores numéricos
- *   Drawer h3    22px                  Playfair 400
- *   Eyebrow/tag  11px UC ls.16em       DM Sans 500
- *   Nav links    12px UC ls.10em       DM Sans 500
- *   Buttons      12px UC ls.10em       DM Sans 600
- *   Body text    14px                  DM Sans 300
- *   Meta/sub     12px                  DM Sans 400
- *   Fine print   11px                  DM Sans 400
+ * ESCALA (sin cambios — solo cambian las familias):
+ *   Hero title   clamp(30px,5vw,56px)  Fraunces 400
+ *   Section h2   clamp(26px,3vw,40px)  Fraunces 400
+ *   Card name    18px                  Fraunces 400
+ *   Price big    22px                  Fraunces 600  ← valores numéricos
+ *   Price small  17px                  Fraunces 600  ← valores numéricos
+ *   Drawer h3    22px                  Fraunces 400
+ *   Eyebrow/tag  11px UC ls.16em       Nunito 600
+ *   Nav links    12px UC ls.10em       Nunito 600
+ *   Buttons      12px UC ls.10em       Nunito 700
+ *   Body text    14px                  Nunito 400
+ *   Meta/sub     12px                  Nunito 400
+ *   Fine print   11px                  Nunito 400
  *
- * Todos los valores monetarios → Playfair 600 + greenDark
+ * Todos los valores monetarios → Fraunces 600 + greenDark
  * Separador de miles: .toLocaleString('es-CO') → $85.000
  */
-const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');`;
+const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,400&family=Nunito:wght@300;400;500;600;700&display=swap');`;
 
 /* ─── DATA ────────────────────────────────────────────── */
 const PRODUCTS = [
@@ -88,8 +92,8 @@ const injectStyles = () => (
 
     /* ── TYPOGRAPHY TOKENS (CSS custom props) ── */
     :root {
-      --f-display : 'Playfair Display', Georgia, serif;
-      --f-body    : 'DM Sans', system-ui, sans-serif;
+      --f-display : 'Fraunces', Georgia, serif;
+      --f-body    : 'Nunito', system-ui, sans-serif;
 
       /* Escala display */
       --t-hero    : clamp(30px, 5vw, 56px);
@@ -99,28 +103,28 @@ const injectStyles = () => (
 
       /* Escala body */
       --t-body    : 14px;
-      --t-meta    : 12px;
-      --t-small   : 11px;
+      --t-meta    : 13px;
+      --t-small   : 12px;
       --t-label   : 11px;
       --t-nav     : 12px;
-      --t-btn     : 12px;
+      --t-btn     : 13px;
 
       /* Escala numérica (precios) */
       --t-price-lg : 22px;
       --t-price-md : 19px;
       --t-price-sm : 17px;
 
-      /* Pesos */
+      /* Pesos — Nunito necesita 600/700 para impacto visual equivalente */
       --w-light   : 300;
       --w-regular : 400;
-      --w-medium  : 500;
-      --w-semi    : 600;
+      --w-medium  : 600;
+      --w-semi    : 700;
 
-      /* Tracking */
-      --ls-label  : 0.16em;
-      --ls-nav    : 0.10em;
-      --ls-btn    : 0.10em;
-      --ls-tight  : 0.04em;
+      /* Tracking — Nunito es más ancha, reducimos espaciado */
+      --ls-label  : 0.12em;
+      --ls-nav    : 0.08em;
+      --ls-btn    : 0.08em;
+      --ls-tight  : 0.02em;
     }
 
     /* Clase utilitaria: cualquier precio/número relevante */
@@ -808,6 +812,7 @@ export default function App() {
             {/* Overlay con texto — SOLO desktop (≥641px) */}
             <div className="hero-overlay">
               <div className="hero-text">
+                <div className="hero-eyebrow">🌿 Colección 2025</div>
                 <h1 className="hero-title">
                   Todo lo que tu<br />mascota <em>necesita,</em><br />en un solo lugar.
                 </h1>
@@ -821,6 +826,7 @@ export default function App() {
 
           {/* Texto hero — SOLO móvil (≤640px), fuera del hero para no superponerse */}
           <div className="hero-text-mobile">
+            <div className="hero-eyebrow" style={{ marginBottom:10 }}>🌿 Colección 2025</div>
             <h1 className="hero-title" style={{ fontSize:26 }}>
               Todo lo que tu mascota <em>necesita,</em> en un solo lugar.
             </h1>
