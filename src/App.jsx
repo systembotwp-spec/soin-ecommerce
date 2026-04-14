@@ -668,10 +668,19 @@ const injectStyles = () => (
         display:block;
       }
 .hero-overlay {
-  display:flex;
-  align-items:center;
-  justify-content:flex-end; /* 👈 mueve a la derecha */
-  padding:0 16px;
+  position: absolute; /* 🔥 ESTA LÍNEA ES LA CLAVE */
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 16px;
+
+  background: linear-gradient(
+    90deg,
+    rgba(45,74,53,0.7) 0%,
+    rgba(45,74,53,0.4) 40%,
+    transparent 70%
+  );
 }
 
 .hero-text {
@@ -856,20 +865,7 @@ export default function App() {
               </div>
             </div>
           </div>
-
-          {/* Texto hero — SOLO móvil (≤640px), fuera del hero para no superponerse */}
-            <h1 className="hero-title" style={{ fontSize:26 }}>
-              Todo lo que tu mascota <em>necesita,</em> en un solo lugar.
-            </h1>
-            <p className="hero-sub" style={{ marginBottom:18 }}>
-              Alimentos · Accesorios · Salud · Higiene · Y mucho amor
-            </p>
-            <button className="hero-cta tap" onClick={() => goTo("catalogo")}>
-              ¡Comprar ahora! <ChevronRight size={15} />
-            </button>
-          </div>
-
-          {/* Trust strip */}
+         {/* Trust strip */}
           <div className="trust">
             {TRUST.map(({ icon: Icon, title, sub }) => (
               <div key={title} className="trust-item">
