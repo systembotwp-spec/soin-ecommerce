@@ -908,7 +908,7 @@ function ProductCard({ p, onAdd, delay = 0 }) {
      4. En tu App.jsx raíz: importar useSheetsCatalog y reemplazar PRODUCTS:
           const { products, loading } = useSheetsCatalog("SPREADSHEET_ID", "Catalogo", "API_KEY");
           if (loading) return <p>Cargando catálogo…</p>;
-════════════════════════════════════════════════════════ */
+════════════════════════════════════════════════════════ 
 export function useSheetsCatalog(spreadsheetId, sheetName = "Catalogo", apiKey = "") {
   const [products, setProducts] = useState([]);
   const [loading,  setLoading]  = useState(true);
@@ -938,4 +938,4 @@ export function useSheetsCatalog(spreadsheetId, sheetName = "Catalogo", apiKey =
   }, [spreadsheetId, sheetName, apiKey]);
 
   return { products, loading, error };
-}
+} */
