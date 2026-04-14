@@ -83,9 +83,11 @@ const injectStyles = () => (
       --ls-btn    : 0.08em;
     }
 
+    .num { font-family: var(--f-display); font-weight: var(--w-semi); color: ${C.greenDark}; }
+
     .soin-root {
       font-family: var(--f-body);
-      font-weight: 400;
+      font-weight: 300;
       font-size: var(--t-body);
       line-height: 1.65;
       background: ${C.warmWhite};
@@ -115,6 +117,7 @@ const injectStyles = () => (
       transition: color .2s; border:none; background:none;
     }
     .nav-link:hover, .nav-link.active { color:${C.greenDark}; }
+    
     .cart-trigger {
       position:relative; background:${C.greenDark}; color:#fff;
       border:none; border-radius:50px; padding:9px 18px;
@@ -143,7 +146,7 @@ const injectStyles = () => (
       background: linear-gradient(100deg, rgba(45,74,53,.6) 0%, rgba(45,74,53,.2) 60%, transparent 100%);
       display:flex; align-items:center; padding:0 6%;
     }
-    .hero-text { max-width:500px; }
+    .hero-text { max-width:480px; }
     .hero-text-mobile { display:none; background:${C.greenDark}; padding:26px 5%; }
 
     .hero-eyebrow {
@@ -158,7 +161,7 @@ const injectStyles = () => (
       font-weight: 400; line-height: 1.1; color:#fff; margin-bottom:12px;
     }
     .hero-title em { font-style:italic; color:${C.goldLight}; }
-    .hero-sub { color:rgba(255,255,255,.8); margin-bottom:22px; }
+    .hero-sub { color:rgba(255,255,255,.8); margin-bottom:22px; font-weight: 300; }
     .hero-cta {
       background:${C.gold}; color:${C.greenDark}; border:none;
       border-radius:50px; padding:13px 28px;
@@ -172,40 +175,39 @@ const injectStyles = () => (
     .trust-item {
       display:flex; align-items:center; gap:10px;
       padding:18px 32px; color:#fff; border-right:1px solid rgba(255,255,255,.1);
+      flex:1; min-width:160px;
     }
     .trust-title { font-weight: 600; font-size: var(--t-meta); }
-    .trust-sub { font-size: var(--t-small); color:${C.greenPale}; }
+    .trust-sub { font-size: var(--t-small); color:${C.greenPale}; font-weight: 400; }
 
-    /* SECTIONS & FILTERS */
-    .section { padding:64px 5%; }
-    .section-header { text-align:center; margin-bottom:40px; }
-    .section-title { font-family: var(--f-display); font-size: var(--t-h2); color:${C.greenDark}; }
-    
-    .search-wrap { position:relative; max-width:500px; margin:0 auto 24px; }
+    /* CATALOG FILTERS */
+    .search-wrap { position:relative; max-width:520px; margin:0 auto 20px; }
     .search-input {
-      width:100%; padding:12px 16px 12px 44px; border-radius:50px;
-      border:1.5px solid ${C.border}; font-family: var(--f-body);
+      width:100%; padding:13px 16px 13px 46px; border-radius:50px;
+      border:1.5px solid ${C.border}; background:#fff; font-family: var(--f-body);
     }
-    .filter-scroll { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:32px; }
+    .filter-scroll { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:30px; }
     .filter-pill {
       padding:8px 20px; border-radius:50px; border:1.5px solid ${C.border};
       background:#fff; cursor:pointer; font-size: var(--t-label);
-      text-transform: uppercase; transition: all .2s;
+      text-transform: uppercase; transition: all .2s; color: ${C.textMuted};
     }
-    .filter-pill.on { background:${C.greenDark}; color:#fff; }
+    .filter-pill.on { background:${C.greenDark}; color:#fff; border-color: ${C.greenDark}; }
 
     /* PRODUCT CARD */
     .products-grid {
-      display:grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr));
-      gap:24px; max-width:1100px; margin:0 auto;
+      display:grid; grid-template-columns: repeat(auto-fill, minmax(210px,1fr));
+      gap:20px; max-width:1100px; margin:0 auto;
     }
     .pcard {
       background:#fff; border-radius:18px; overflow:hidden;
       border:1.5px solid ${C.border}; display:flex; flex-direction:column;
+      transition: transform .3s;
     }
-    .pcard-img { width:100%; height:200px; object-fit:cover; }
-    .pcard-body { padding:16px; flex:1; }
-    .pcard-name { font-family: var(--f-display); font-size: var(--t-card); color:${C.greenDark}; margin-bottom:8px; }
+    .pcard:hover { transform: translateY(-5px); border-color: ${C.greenLight}; }
+    .pcard-img { width:100%; height:190px; object-fit:cover; }
+    .pcard-body { padding:14px 16px 16px; flex:1; display:flex; flex-direction:column; justify-content:space-between; }
+    .pcard-name { font-family: var(--f-display); font-size: var(--t-card); color:${C.greenDark}; margin-bottom:12px; }
     .pcard-price { font-family: var(--f-display); font-size: var(--t-price-lg); font-weight: 600; color:${C.greenDark}; }
     .add-btn {
       background:${C.greenDark}; color:#fff; border:none;
@@ -214,31 +216,35 @@ const injectStyles = () => (
     }
 
     /* CART DRAWER */
-    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:1000; }
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:1000; backdrop-filter: blur(4px); }
     .drawer {
-      position:fixed; top:0; right:0; bottom:0; width:min(400px,90%);
+      position:fixed; top:0; right:0; bottom:0; width:min(400px,93%);
       background:${C.warmWhite}; z-index:1001; display:flex; flex-direction:column;
     }
-    .drawer-head { padding:20px; background:${C.greenMist}; display:flex; justify-content:space-between; align-items:center; }
-    .drawer-body { flex:1; overflow-y:auto; padding:20px; }
-    .cart-item { display:grid; grid-template-columns:60px 1fr; gap:12px; padding:12px 0; border-bottom:1px solid ${C.border}; }
-    .ci-img { width:60px; height:60px; border-radius:8px; object-fit:cover; }
-    .ci-name { font-family: var(--f-display); font-size: 15px; color:${C.greenDark}; }
-    .del-btn { background:none; border:none; color:${C.textMuted}; cursor:pointer; }
-    .del-btn:hover { color:#e74c3c; }
-
+    .drawer-head { padding:22px 24px; background:${C.greenMist}; border-bottom:1px solid ${C.border}; display:flex; justify-content:space-between; align-items:center; }
+    .drawer-head h3 { font-family: var(--f-display); font-size: var(--t-drawer); color: ${C.greenDark}; }
+    .drawer-body { flex:1; overflow-y:auto; padding:20px 24px; }
+    .cart-item { display:grid; grid-template-columns:68px 1fr; gap:14px; padding:16px 0; border-bottom:1px solid ${C.border}; }
+    .ci-img { width:68px; height:68px; border-radius:12px; object-fit:cover; border: 1px solid ${C.border}; }
+    .ci-name { font-family: var(--f-display); font-size: 15px; color:${C.greenDark}; line-height:1.3; }
+    
     /* FOOTER */
-    .footer { background:${C.greenDark}; padding:60px 5% 30px; color:#fff; }
-    .footer-grid { display:grid; grid-template-columns: 2fr 1fr 1fr; gap:40px; max-width:1100px; margin:0 auto; }
-    .footer-logo { height:40px; filter: brightness(0) invert(1); margin-bottom:15px; }
+    .footer { background:${C.greenDark}; padding:52px 5% 28px; color:rgba(255,255,255,0.6); }
+    .footer-grid { display:grid; grid-template-columns: 1.8fr 1fr 1fr; gap:40px; max-width:1100px; margin:0 auto 40px; }
+    .footer-logo { height:38px; filter: brightness(0) invert(1); margin-bottom:14px; }
+    .footer-col h4 { color: ${C.greenPale}; text-transform: uppercase; font-size: var(--t-small); margin-bottom:16px; letter-spacing: var(--ls-label); }
 
     @media(max-width:640px){
       .hero-overlay { display:none; }
       .hero-text-mobile { display:block; }
       .hero-img { max-height:none; height:auto; }
-      .trust-item { border:none; padding:12px; width:50%; }
+      .trust { display:grid; grid-template-columns: 1fr 1fr; }
+      .trust-item { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.1); }
+      .products-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
       .footer-grid { grid-template-columns: 1fr; }
     }
+    .tap { cursor:pointer; }
+    .tap:active { transform: scale(0.95); }
   `}</style>
 );
 
@@ -293,28 +299,30 @@ export default function App() {
     <div className="soin-root">
       {injectStyles()}
 
+      {/* NAV */}
       <nav className="nav">
-        <img className="nav-logo" src="/Logo.png" alt="SOIN" onClick={() => goTo("inicio")} />
+        <img className="nav-logo tap" src="/Logo.png" alt="SOIN" onClick={() => goTo("inicio")} />
         <div className="nav-links">
-          <button className={`nav-link ${view === "inicio" ? "active" : ""}`} onClick={() => goTo("inicio")}>Inicio</button>
-          <button className={`nav-link ${view === "catalogo" ? "active" : ""}`} onClick={() => goTo("catalogo")}>Tienda</button>
-          <button className="cart-trigger" onClick={() => setDrawerOpen(true)}>
+          <button className={`nav-link tap ${view === "inicio" ? "active" : ""}`} onClick={() => goTo("inicio")}>Inicio</button>
+          <button className={`nav-link tap ${view === "catalogo" ? "active" : ""}`} onClick={() => goTo("catalogo")}>Tienda</button>
+          <button className="cart-trigger tap" onClick={() => setDrawerOpen(true)}>
             <ShoppingCart size={16} /> Carrito {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
           </button>
         </div>
       </nav>
 
+      {/* INICIO */}
       {view === "inicio" && (
         <>
           <div className="hero">
-            <img className="hero-img" src="/soin-banner.png" alt="SOIN" />
+            <img className="hero-img" src="/soin-banner.png" alt="SOIN Banner" />
             <div className="hero-overlay">
               <div className="hero-text">
                 <div className="hero-eyebrow">🌿 Colección 2025</div>
                 <h1 className="hero-title">Todo lo que tu<br />mascota <em>necesita,</em><br />en un solo lugar.</h1>
-                <p className="hero-sub">Alimentos · Accesorios · Salud · Higiene</p>
-                <button className="hero-cta" onClick={() => goTo("catalogo")}>
-                  ¡Compra ahora! <ChevronRight size={15} />
+                <p className="hero-sub">Alimentos · Accesorios · Salud · Higiene · Y mucho amor</p>
+                <button className="hero-cta tap" onClick={() => goTo("catalogo")}>
+                  ¡Compra para los que amas! <ChevronRight size={15} />
                 </button>
               </div>
             </div>
@@ -323,52 +331,35 @@ export default function App() {
           <div className="hero-text-mobile">
             <div className="hero-eyebrow">🌿 Colección 2025</div>
             <h1 className="hero-title">Todo lo que tu mascota <em>necesita.</em></h1>
-            <button className="hero-cta" onClick={() => goTo("catalogo")}>¡Compra ahora!</button>
+            <button className="hero-cta tap" onClick={() => goTo("catalogo")}>¡Ver tienda!</button>
           </div>
 
           <div className="trust">
             {TRUST.map(({ icon: Icon, title, sub }) => (
               <div key={title} className="trust-item">
-                <Icon size={20} color={C.goldLight} />
+                <Icon size={18} color={C.greenPale} />
                 <div><div className="trust-title">{title}</div><div className="trust-sub">{sub}</div></div>
               </div>
             ))}
           </div>
-          
-          <section className="section">
-             <div className="section-header">
-                <span className="hero-eyebrow" style={{color:C.greenMid, background:'none', border:'none'}}>Destacados</span>
-                <h2 className="section-title">Nuestros Favoritos</h2>
-             </div>
-             <div className="products-grid">
-                {PRODUCTS.slice(0,3).map(p => (
-                   <div key={p.id} className="pcard">
-                      <img src={p.img} className="pcard-img" />
-                      <div className="pcard-body">
-                         <div className="pcard-name">{p.name}</div>
-                         <div className="pcard-price">${p.price.toLocaleString('es-CO')}</div>
-                      </div>
-                   </div>
-                ))}
-             </div>
-          </section>
         </>
       )}
 
+      {/* TIENDA / CATALOGO */}
       {view === "catalogo" && (
-        <section className="section">
-          <div className="section-header">
-            <h2 className="section-title">Catálogo Completo</h2>
+        <section className="section" style={{padding:'40px 5%'}}>
+          <div style={{textAlign:'center', marginBottom:32}}>
+            <h2 className="hero-title" style={{color:C.greenDark, fontSize:'2rem'}}>Nuestro Catálogo</h2>
           </div>
-          
+
           <div className="search-wrap">
-            <Search size={18} style={{position:'absolute', left:15, top:13, color:C.textMuted}} />
-            <input className="search-input" placeholder="Buscar productos..." onChange={(e) => setSearch(e.target.value)} />
+            <Search size={18} style={{position:'absolute', left:16, top:13, color:C.textMuted}} />
+            <input className="search-input" placeholder="¿Qué buscas hoy?" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
 
           <div className="filter-scroll">
             {["Todos", "Perro", "Gato"].map(f => (
-              <button key={f} className={`filter-pill ${filterPet === f ? "on" : ""}`} onClick={() => setFilterPet(f)}>{f}</button>
+              <button key={f} className={`filter-pill tap ${filterPet === f ? "on" : ""}`} onClick={() => setFilterPet(f)}>{f}</button>
             ))}
           </div>
 
@@ -378,9 +369,9 @@ export default function App() {
                 <img src={p.img} className="pcard-img" alt={p.name} />
                 <div className="pcard-body">
                   <div className="pcard-name">{p.name}</div>
-                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline'}}>
                     <div className="pcard-price">${p.price.toLocaleString('es-CO')}</div>
-                    <button className="add-btn" onClick={() => addToCart(p)}><Plus size={18} /></button>
+                    <button className="add-btn tap" onClick={() => addToCart(p)}><Plus size={18} /></button>
                   </div>
                 </div>
               </div>
@@ -389,72 +380,77 @@ export default function App() {
         </section>
       )}
 
-      {/* FOOTER - Restaurado */}
+      {/* FOOTER */}
       <footer className="footer">
         <div className="footer-grid">
           <div>
             <img src="/Logo.png" className="footer-logo" alt="SOIN" />
-            <p style={{opacity:0.6}}>Expertos en bienestar para tus compañeros de vida.</p>
+            <p style={{maxWidth:280, fontSize:14}}>Expertos en el cuidado y bienestar integral de tus mascotas. Calidad garantizada.</p>
           </div>
-          <div>
-            <h4 style={{marginBottom:15, color:C.goldLight}}>Menú</h4>
-            <ul style={{listStyle:'none', opacity:0.7}}>
-              <li onClick={() => goTo("inicio")} style={{cursor:'pointer'}}>Inicio</li>
-              <li onClick={() => goTo("catalogo")} style={{cursor:'pointer'}}>Tienda</li>
+          <div className="footer-col">
+            <h4>Navegación</h4>
+            <ul style={{listStyle:'none', fontSize:14}}>
+              <li className="tap" style={{marginBottom:8}} onClick={() => goTo("inicio")}>Inicio</li>
+              <li className="tap" onClick={() => goTo("catalogo")}>Tienda</li>
             </ul>
           </div>
-          <div>
-            <h4 style={{marginBottom:15, color:C.goldLight}}>Contacto</h4>
-            <p style={{opacity:0.7}}>WhatsApp: +57 315 842 9286</p>
+          <div className="footer-col">
+            <h4>Contacto</h4>
+            <p style={{fontSize:14}}>WhatsApp: +57 315 842 9286</p>
+            <p style={{fontSize:14, marginTop:8}}>Envíos a todo el país 🇨🇴</p>
           </div>
+        </div>
+        <div style={{textAlign:'center', fontSize:12, marginTop:40, borderTop:'1px solid rgba(255,255,255,0.1)', paddingTop:20}}>
+          © 2025 SOIN Mascotas. Todos los derechos reservados.
         </div>
       </footer>
 
-      {/* DRAWER & OVERLAY */}
+      {/* CARRITO */}
       {drawerOpen && (
         <>
           <div className="overlay" onClick={() => setDrawerOpen(false)} />
           <div className="drawer">
             <div className="drawer-head">
-              <h3 style={{fontFamily:'var(--f-display)'}}>Tu Carrito</h3>
-              <button className="del-btn" onClick={() => setDrawerOpen(false)}><X /></button>
+              <h3>Tu Pedido</h3>
+              <button className="tap" style={{background:'none', border:'none'}} onClick={() => setDrawerOpen(false)}><X /></button>
             </div>
             <div className="drawer-body">
-              {cart.length === 0 ? <p>El carrito está vacío</p> : cart.map(i => (
-                <div key={i.id} className="cart-item">
-                  <img src={i.img} className="ci-img" />
-                  <div>
-                    <div className="ci-name">{i.name}</div>
-                    <div style={{display:'flex', justifyContent:'space-between', marginTop:5}}>
-                      <div className="pcard-price" style={{fontSize:16}}>${(i.price * i.qty).toLocaleString('es-CO')}</div>
-                      <div style={{display:'flex', gap:10, alignItems:'center'}}>
-                         <Minus size={14} className="tap" onClick={() => updateQty(i.id, -1)} />
-                         <span>{i.qty}</span>
-                         <Plus size={14} className="tap" onClick={() => updateQty(i.id, 1)} />
-                         <Trash2 size={14} color="#e74c3c" className="tap" onClick={() => removeItem(i.id)} />
+              {cart.length === 0 ? <p style={{textAlign:'center', marginTop:40}}>El carrito está vacío</p> : (
+                <>
+                  {cart.map(i => (
+                    <div key={i.id} className="cart-item">
+                      <img src={i.img} className="ci-img" alt={i.name} />
+                      <div>
+                        <div className="ci-name">{i.name}</div>
+                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:8}}>
+                          <div className="num" style={{fontSize:16}}>${(i.price * i.qty).toLocaleString('es-CO')}</div>
+                          <div style={{display:'flex', alignItems:'center', gap:10}}>
+                            <button className="tap" style={{background:'none', border:'1px solid #ccc', borderRadius:'50%', width:24, height:24}} onClick={() => updateQty(i.id, -1)}>-</button>
+                            <span>{i.qty}</span>
+                            <button className="tap" style={{background:'none', border:'1px solid #ccc', borderRadius:'50%', width:24, height:24}} onClick={() => updateQty(i.id, 1)}>+</button>
+                            <Trash2 size={16} color="#e74c3c" className="tap" onClick={() => removeItem(i.id)} />
+                          </div>
+                        </div>
                       </div>
                     </div>
+                  ))}
+                  <div style={{marginTop:30, borderTop:`2px solid ${C.border}`, paddingTop:20}}>
+                    <div style={{display:'flex', justifyContent:'space-between', marginBottom:15}}>
+                      <span style={{fontWeight:600}}>Total:</span>
+                      <span className="num" style={{fontSize:20}}>${subtotal.toLocaleString('es-CO')}</span>
+                    </div>
+                    <button className="hero-cta tap" style={{width:'100%', justifyContent:'center'}} onClick={handleCheckout}>Finalizar por WhatsApp</button>
                   </div>
-                </div>
-              ))}
-              
-              {cart.length > 0 && (
-                <div style={{marginTop:30}}>
-                  <p style={{display:'flex', justifyContent:'space-between', fontWeight:700}}>
-                    Total: <span className="pcard-price">${subtotal.toLocaleString('es-CO')}</span>
-                  </p>
-                  <button className="hero-cta" style={{width:'100%', marginTop:20, justifyContent:'center'}} onClick={handleCheckout}>
-                    Pedir por WhatsApp
-                  </button>
-                </div>
+                </>
               )}
             </div>
           </div>
         </>
       )}
 
-      <a href="https://wa.me/573158429286" className="wa-btn" target="_blank" rel="noreferrer">
-        <MessageCircle size={28} />
+      {/* WHATSAPP FLOAT */}
+      <a href="https://wa.me/573158429286" className="wa-btn tap" style={{position:'fixed', bottom:25, right:25, background:C.whatsapp, color:'#fff', width:56, height:56, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 12px rgba(0,0,0,0.2)', textDecoration:'none', zIndex:999}} target="_blank" rel="noreferrer">
+        <MessageCircle size={30} />
       </a>
     </div>
   );
