@@ -812,7 +812,6 @@ export default function App() {
             {/* Overlay con texto — SOLO desktop (≥641px) */}
             <div className="hero-overlay">
               <div className="hero-text">
-                <div className="hero-eyebrow">🌿 Colección 2025</div>
                 <h1 className="hero-title">
                   Todo lo que tu<br />mascota <em>necesita,</em><br />en un solo lugar.
                 </h1>
@@ -826,7 +825,6 @@ export default function App() {
 
           {/* Texto hero — SOLO móvil (≤640px), fuera del hero para no superponerse */}
           <div className="hero-text-mobile">
-            <div className="hero-eyebrow" style={{ marginBottom:10 }}>🌿 Colección 2025</div>
             <h1 className="hero-title" style={{ fontSize:26 }}>
               Todo lo que tu mascota <em>necesita,</em> en un solo lugar.
             </h1>
