@@ -1,28 +1,42 @@
-export default function Hero() {
-  return (
-    <div style={{ position: "relative", height: "320px" }}>
-      <img
-        src="/soin-banner.png"
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "cover"
-        }}
-      />
+import { ChevronRight } from "lucide-react";
 
-      <div style={{
-        position: "absolute",
-        inset: 0,
-        display: "flex",
-        alignItems: "center",
-        padding: "20px",
-        background: "linear-gradient(90deg, rgba(0,0,0,0.5), transparent)"
-      }}>
-        <div style={{ maxWidth: "280px", color: "#fff" }}>
-          <h1>Todo lo que tu mascota necesita</h1>
-          <button>Comprar ahora</button>
+export default function Hero({ goTo }) {
+  return (
+    <>
+      <div className="hero">
+        <img className="hero-img" src="/soin-banner.png" />
+
+        <div className="hero-overlay">
+          <div className="hero-text">
+            <div className="hero-eyebrow">🌿 Colección 2025</div>
+
+            <h1 className="hero-title">
+              Todo lo que tu<br />mascota <em>necesita,</em><br />en un solo lugar.
+            </h1>
+
+            <p className="hero-sub">
+              Alimentos · Accesorios · Salud · Higiene · Y mucho amor
+            </p>
+
+            <button className="hero-cta tap" onClick={() => goTo("catalogo")}>
+              ¡Compra para los que amas! <ChevronRight size={15} />
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Mobile text */}
+      <div className="hero-text-mobile">
+        <div className="hero-eyebrow">🌿 Colección 2025</div>
+
+        <h1 className="hero-title" style={{ fontSize: 26 }}>
+          Todo lo que tu mascota <em>necesita</em>
+        </h1>
+
+        <button className="hero-cta tap" onClick={() => goTo("catalogo")}>
+          Comprar
+        </button>
+      </div>
+    </>
   );
 }
