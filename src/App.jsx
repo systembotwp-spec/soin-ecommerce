@@ -667,9 +667,43 @@ const injectStyles = () => (
         object-position:center top;
         display:block;
       }
-      .hero-overlay        { display:none; }       /* sin texto encima */
-      .hero-text-mobile    { display:block; }      /* texto limpio debajo */
+.hero-overlay {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end; /* 👈 mueve a la derecha */
+  padding:0 16px;
+}
 
+.hero-text {
+  max-width:220px; /* 👈 controla ancho */
+  text-align:left;
+}
+
+/* Gradiente SOLO lado izquierdo para no tapar mascota */
+.hero-overlay {
+  background: linear-gradient(
+    90deg,
+    rgba(45,74,53,0.7) 0%,
+    rgba(45,74,53,0.4) 40%,
+    transparent 70%
+  );
+}
+
+/* Ajustes tipografía móvil */
+.hero-title {
+  font-size:22px;
+  line-height:1.2;
+}
+
+.hero-sub {
+  font-size:12px;
+  line-height:1.5;
+}
+
+.hero-cta {
+  padding:10px 16px;
+  font-size:11px;
+}
       /* Nav */
       .nav-links .nav-link:not(.cart-trigger) { display:none; }
       .nav { height:56px; }
@@ -824,7 +858,6 @@ export default function App() {
           </div>
 
           {/* Texto hero — SOLO móvil (≤640px), fuera del hero para no superponerse */}
-          <div className="hero-text-mobile">
             <h1 className="hero-title" style={{ fontSize:26 }}>
               Todo lo que tu mascota <em>necesita,</em> en un solo lugar.
             </h1>
