@@ -1,21 +1,35 @@
 import { ShoppingCart } from "lucide-react";
 
-export default function Navbar({ totalItems, openCart }) {
+export default function Navbar({ view, goTo, totalItems, setDrawerOpen }) {
   return (
-    <div style={{
-      display: "flex",
-      justifyContent: "space-between",
-      padding: "20px",
-      background: "#fff",
-      position: "sticky",
-      top: 0,
-      zIndex: 100
-    }}>
-      <h2>SOIN</h2>
+    <nav className="nav">
+      <img
+        className="nav-logo tap"
+        src="/Logo.png"
+        onClick={() => goTo("inicio")}
+      />
 
-      <button onClick={openCart}>
-        <ShoppingCart /> ({totalItems})
-      </button>
-    </div>
+      <div className="nav-links">
+        <button
+          className={`nav-link tap ${view === "inicio" ? "active" : ""}`}
+          onClick={() => goTo("inicio")}
+        >
+          Inicio
+        </button>
+
+        <button
+          className={`nav-link tap ${view === "catalogo" ? "active" : ""}`}
+          onClick={() => goTo("catalogo")}
+        >
+          Tienda
+        </button>
+
+        <button className="cart-trigger tap" onClick={() => setDrawerOpen(true)}>
+          <ShoppingCart size={16} />
+          Carrito
+          {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
+        </button>
+      </div>
+    </nav>
   );
 }
