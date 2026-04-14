@@ -654,22 +654,64 @@ const injectStyles = () => (
     /* ── RESPONSIVE ──────────────────────────────────────── */
     @media(max-width:640px){
 
-      /* Hero: la imagen se muestra completa (ratio natural),
-         el overlay se oculta y el texto aparece en un bloque
-         de color DEBAJO de la imagen, sin superponerse */
-      .hero                { overflow:visible; }
-      .hero-img            {
-        max-height:none;          /* imagen a su ratio natural */
-        min-height:0;
-        height:auto;
-        width:100%;
-        object-fit:cover;
-        object-position:center top;
-        display:block;
-      }
-      .hero-overlay        { display:none; }       /* sin texto encima */
-      .hero-text-mobile    { display:block; }      /* texto limpio debajo */
+  /* HERO CONTENEDOR */
+  .hero{
+    position: relative;
+    height: 320px; /* 🔥 altura controlada */
+    overflow: hidden;
+  }
 
+  /* IMAGEN */
+  .hero-img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: right center; /* 👈 deja espacio a la izquierda */
+  }
+
+  /* OVERLAY ACTIVO */
+  .hero-overlay{
+    position: absolute;
+    inset: 0;
+
+    display: flex;
+    justify-content: flex-start; /* 👈 texto a la izquierda */
+    align-items: center;
+
+    padding: 0 16px;
+
+    background: linear-gradient(
+      90deg,
+      rgba(45,74,53,0.75) 0%,
+      rgba(45,74,53,0.4) 40%,
+      transparent 70%
+    );
+  }
+
+  /* TEXTO */
+  .hero-text{
+    max-width: 200px;
+  }
+
+  .hero-title{
+    font-size: 22px;
+    line-height: 1.2;
+  }
+
+  .hero-sub{
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .hero-cta{
+    font-size: 11px;
+    padding: 10px 16px;
+  }
+    /* 🔥 ELIMINAMOS ESTE SISTEMA */
+    .hero-text-mobile{
+      display: none;
+  }
+  }
       /* Nav */
       .nav-links .nav-link:not(.cart-trigger) { display:none; }
       .nav { height:56px; }
@@ -824,7 +866,6 @@ export default function App() {
           </div>
 
           {/* Texto hero — SOLO móvil (≤640px), fuera del hero para no superponerse */}
-          <div className="hero-text-mobile">
             <h1 className="hero-title" style={{ fontSize:26 }}>
               Todo lo que tu mascota <em>necesita,</em> en un solo lugar.
             </h1>
@@ -939,16 +980,8 @@ export default function App() {
           <div>
             <img className="footer-logo" src="/Logo.png" alt="SOIN" />
             <p className="footer-tagline">
-              Todo lo que tu mascota necesita, en un solo lugar. Productos naturales con respaldo veterinario para perros y gatos de Colombia.
+              Todo lo que tu mascota necesita, en un solo lugar. Productos naturales con respaldo veterinario para perros y gatos.
             </p>
-          </div>
-          <div className="footer-col">
-            <h4>Tienda</h4>
-            <ul>
-              {["Perros","Gatos","Alimentos Nutritivos","Accesorios","Salud y Bienestar"].map(l => (
-                <li key={l}><a href="#">{l}</a></li>
-              ))}
-            </ul>
           </div>
           <div className="footer-col">
             <h4>Soporte</h4>
