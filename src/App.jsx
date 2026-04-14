@@ -812,13 +812,12 @@ export default function App() {
             {/* Overlay con texto — SOLO desktop (≥641px) */}
             <div className="hero-overlay">
               <div className="hero-text">
-                <div className="hero-eyebrow">🌿 Colección 2025</div>
                 <h1 className="hero-title">
                   Todo lo que tu<br />mascota <em>necesita,</em><br />en un solo lugar.
                 </h1>
                 <p className="hero-sub">Alimentos · Accesorios · Salud · Higiene · Y mucho amor</p>
                 <button className="hero-cta tap" onClick={() => goTo("catalogo")}>
-                  ¡Compra para los que amas! <ChevronRight size={15} />
+                  ¡Comprar ahora! <ChevronRight size={15} />
                 </button>
               </div>
             </div>
@@ -826,7 +825,6 @@ export default function App() {
 
           {/* Texto hero — SOLO móvil (≤640px), fuera del hero para no superponerse */}
           <div className="hero-text-mobile">
-            <div className="hero-eyebrow" style={{ marginBottom:10 }}>🌿 Colección 2025</div>
             <h1 className="hero-title" style={{ fontSize:26 }}>
               Todo lo que tu mascota <em>necesita,</em> en un solo lugar.
             </h1>
@@ -834,7 +832,7 @@ export default function App() {
               Alimentos · Accesorios · Salud · Higiene · Y mucho amor
             </p>
             <button className="hero-cta tap" onClick={() => goTo("catalogo")}>
-              ¡Compra para los que amas! <ChevronRight size={15} />
+              ¡Comprar ahora! <ChevronRight size={15} />
             </button>
           </div>
 
@@ -943,14 +941,6 @@ export default function App() {
             <p className="footer-tagline">
               Todo lo que tu mascota necesita, en un solo lugar. Productos naturales con respaldo veterinario para perros y gatos de Colombia.
             </p>
-          </div>
-          <div className="footer-col">
-            <h4>Tienda</h4>
-            <ul>
-              {["Perros","Gatos","Alimentos Nutritivos","Accesorios","Salud y Bienestar"].map(l => (
-                <li key={l}><a href="#">{l}</a></li>
-              ))}
-            </ul>
           </div>
           <div className="footer-col">
             <h4>Soporte</h4>
