@@ -123,15 +123,18 @@ height:320px; /* 🔥 clave */
 .hero-overlay {
   position: absolute;
   inset: 0;
+
   display: flex;
   justify-content: flex-start; /* 🔥 CAMBIO AQUÍ */
   align-items: center;
+
   padding: 0 16px;
+
   background: linear-gradient(
-  270deg, /* 👈 invertimos dirección */
-  rgba(45,74,53,0.7) 0%,
-  rgba(45,74,53,0.4) 40%,
-  transparent 75%
+    270deg, /* 👈 invertimos dirección */
+    rgba(45,74,53,0.7) 0%,
+    rgba(45,74,53,0.4) 40%,
+    transparent 75%
   );
 }
 
