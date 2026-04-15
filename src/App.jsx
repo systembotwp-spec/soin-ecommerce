@@ -54,6 +54,11 @@ const normalizeCatalogLabel = (value = "") => {
   return label;
 };
 
+const uniqueSorted = (items) =>
+  Array.from(new Set(items.filter(Boolean))).sort((a, b) =>
+    a.localeCompare(b, "es", { sensitivity: "base" })
+  );
+
 const normalizePrices = (unitPrice, offerPrice) => {
   if (offerPrice == null || offerPrice === unitPrice) {
     return { price: unitPrice, salePrice: null };
@@ -455,15 +460,22 @@ const injectStyles = () => (
     }
     .search-input:focus { border-color:${C.greenMid}; box-shadow:0 0 0 3px rgba(74,122,90,.12); }
     .search-input::placeholder { color:${C.textMuted}; font-weight:var(--w-light); }
-    .filter-scroll { display:flex; gap:8px; overflow-x:auto; padding:0 0 10px; scrollbar-width:none; justify-content:center; flex-wrap:wrap; }
-    .filter-scroll::-webkit-scrollbar { display:none; }
-    .filter-pill {
-      white-space:nowrap; padding:8px 20px; border-radius:50px; border:1.5px solid ${C.border}; background:#fff;
-      font-family:var(--f-body); font-size:var(--t-label); font-weight:var(--w-semi); letter-spacing:.05em;
-      cursor:pointer; color:${C.textMuted}; transition:all .2s;
+    .filters-grid {
+      display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px; max-width:760px; margin:0 auto 28px;
     }
-    .filter-pill:hover { border-color:${C.greenMid}; color:${C.greenDark}; }
-    .filter-pill.on { background:${C.greenDark}; color:#fff; border-color:${C.greenDark}; }
+    .filter-field { display:flex; flex-direction:column; gap:5px; text-align:left; }
+    .filter-label {
+      font-family:var(--f-body); font-size:var(--t-label); font-weight:var(--w-semi);
+      letter-spacing:var(--ls-label); text-transform:uppercase; color:${C.greenMid};
+    }
+    .filter-select {
+      width:100%; padding:11px 12px; border-radius:8px; border:1.5px solid ${C.border};
+      background:#fff; color:${C.greenDark}; font-family:var(--f-body);
+      font-size:var(--t-meta); font-weight:var(--w-semi); outline:none; cursor:pointer;
+      transition:border-color .2s, box-shadow .2s;
+    }
+    .filter-select:focus { border-color:${C.greenMid}; box-shadow:0 0 0 3px rgba(74,122,90,.12); }
 
     /* ── EMPTY STATE catálogo ── */
     .empty-catalog {
@@ -493,13 +505,17 @@ const injectStyles = () => (
     .pcard-img-scroll::-webkit-scrollbar { display:none; }
     .pcard-img { width:100%; height:190px; object-fit:contain; object-position:center; display:block; flex:0 0 100%; scroll-snap-align:start; transition:transform .5s; background:${C.greenMist}; }
     .pcard:hover .pcard-img { transform:scale(1.02); }
-    .pcard-img-hint {
-      position:absolute; right:10px; bottom:10px;
-      background:rgba(45,74,53,.82); color:#fff; border-radius:50px;
-      padding:4px 9px; font-family:var(--f-body); font-size:9px;
-      font-weight:var(--w-bold); letter-spacing:.05em; text-transform:uppercase;
-      backdrop-filter:blur(6px);
+    .pcard-dots {
+      position:absolute; left:50%; bottom:9px; transform:translateX(-50%);
+      display:flex; gap:5px; padding:4px 7px; border-radius:50px;
+      background:rgba(45,74,53,.42); backdrop-filter:blur(6px);
+      pointer-events:none;
     }
+    .pcard-dot {
+      width:6px; height:6px; border-radius:50%;
+      background:rgba(255,255,255,.62);
+    }
+    .pcard-dot:first-child { background:#fff; }
     .pcard-badge {
       position:absolute; top:10px; left:10px; background:${C.greenDark}; color:#fff;
       font-family:var(--f-body); font-size:9px; font-weight:var(--w-bold); letter-spacing:var(--ls-label);
@@ -635,6 +651,7 @@ const injectStyles = () => (
 
       .featured-grid      { grid-template-columns:1fr 1fr; gap:10px; }
       .products-grid      { grid-template-columns:1fr 1fr; gap:10px; }
+      .filters-grid       { grid-template-columns:1fr; gap:9px; margin-bottom:22px; }
       .footer-grid        { grid-template-columns:1fr; gap:24px; }
 
       .pcard-img          { height:130px; object-fit:contain; }
@@ -676,8 +693,9 @@ export default function App() {
   const [cart, setCart]             = usePersistedCart();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [view, setView]             = useState("inicio");
-  const [filterPet, setFilterPet]   = useState("Todos");
-  const [filterCat, setFilterCat]   = useState("Todos");
+  const [filterPet, setFilterPet]   = useState("");
+  const [filterCat, setFilterCat]   = useState("");
+  const [filterSubcat, setFilterSubcat] = useState("");
   const [search, setSearch]         = useState("");
   const [shippingZone, setShipping] = useState("");
   const { toasts, push: toast }     = useToast();
@@ -714,6 +732,22 @@ export default function App() {
   const shipCost   = shippingZone && !shippingNeedsQuote ? SHIPPING[shippingZone] : 0;
   const grandTotal = subtotal + shipCost;
 
+  const filterOptions = useMemo(() => ({
+    categories: uniqueSorted(catalogProducts.map((p) => p.category)),
+    subcategories: uniqueSorted(
+      catalogProducts
+        .filter((p) => !filterCat || normalize(p.category) === normalize(filterCat))
+        .map((p) => p.subcategory)
+    ),
+    pets: uniqueSorted(catalogProducts.map((p) => p.tag2)),
+  }), [catalogProducts, filterCat]);
+
+  useEffect(() => {
+    if (filterSubcat && !filterOptions.subcategories.includes(filterSubcat)) {
+      setFilterSubcat("");
+    }
+  }, [filterSubcat, filterOptions.subcategories]);
+
   /* filtrado — busca también en descripción y etiquetas */
   const filtered = useMemo(() =>
     catalogProducts.filter((p) => {
@@ -729,20 +763,16 @@ export default function App() {
         ...getProductVariants(p).map((v) => v.presentation),
       ].map(normalize).join(" ").includes(q);
       const petLabel = normalize(p.tag2);
-      const subcategoryLabel = normalize(p.subcategory);
-      const filterPetLabel = normalize(filterPet);
       const matchP =
-        filterPet === "Todos" ||
-        petLabel === filterPetLabel ||
-        petLabel.includes(filterPetLabel) ||
-        petLabel === "todos" ||
-        subcategoryLabel === filterPetLabel ||
-        subcategoryLabel.includes(filterPetLabel) ||
-        subcategoryLabel === "todos";
-      const matchC = filterCat === "Todos" || normalize(p.category) === normalize(filterCat);
-      return matchS && matchP && matchC;
+        !filterPet ||
+        petLabel === normalize(filterPet) ||
+        petLabel.includes(normalize(filterPet)) ||
+        petLabel === "todos";
+      const matchC = !filterCat || normalize(p.category) === normalize(filterCat);
+      const matchSubcat = !filterSubcat || normalize(p.subcategory) === normalize(filterSubcat);
+      return matchS && matchP && matchC && matchSubcat;
     }),
-  [catalogProducts, search, filterPet, filterCat]);
+  [catalogProducts, search, filterPet, filterCat, filterSubcat]);
 
   /* checkout — encodeURIComponent en texto dinámico */
   const handleCheckout = useCallback(() => {
@@ -796,7 +826,7 @@ export default function App() {
   }, [drawerOpen]);
 
   const goTo = (v) => { setView(v); setDrawerOpen(false); window.scrollTo({ top:0, behavior:"smooth" }); };
-  const resetFilters = () => { setSearch(""); setFilterPet("Todos"); setFilterCat("Todos"); };
+  const resetFilters = () => { setSearch(""); setFilterPet(""); setFilterCat(""); setFilterSubcat(""); };
 
   return (
     <div className="soin-root">
@@ -916,23 +946,48 @@ export default function App() {
             />
           </div>
 
-          <div className="filter-scroll" style={{marginBottom:8}}
-            role="group" aria-label="Filtrar por mascota">
-            {["Todos","Perro","Gato"].map(v => (
-              <button key={v}
-                className={`filter-pill tap ${filterPet===v?"on":""}`}
-                onClick={() => setFilterPet(v)} aria-pressed={filterPet===v}>{v}
-              </button>
-            ))}
-          </div>
-          <div className="filter-scroll" style={{marginBottom:28}}
-            role="group" aria-label="Filtrar por categoría">
-            {["Todos","Alimentos","Snacks","Accesorios","Limpieza"].map(v => (
-              <button key={v}
-                className={`filter-pill tap ${filterCat===v?"on":""}`}
-                onClick={() => setFilterCat(v)} aria-pressed={filterCat===v}>{v}
-              </button>
-            ))}
+          <div className="filters-grid" aria-label="Filtros del catálogo">
+            <label className="filter-field">
+              <span className="filter-label">Categoría</span>
+              <select
+                className="filter-select"
+                value={filterCat}
+                onChange={(event) => setFilterCat(event.target.value)}
+              >
+                <option value="">Todas</option>
+                {filterOptions.categories.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="filter-field">
+              <span className="filter-label">Subcategoría</span>
+              <select
+                className="filter-select"
+                value={filterSubcat}
+                onChange={(event) => setFilterSubcat(event.target.value)}
+              >
+                <option value="">Todas</option>
+                {filterOptions.subcategories.map((subcategory) => (
+                  <option key={subcategory} value={subcategory}>{subcategory}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="filter-field">
+              <span className="filter-label">Mascota</span>
+              <select
+                className="filter-select"
+                value={filterPet}
+                onChange={(event) => setFilterPet(event.target.value)}
+              >
+                <option value="">Todas</option>
+                {filterOptions.pets.map((pet) => (
+                  <option key={pet} value={pet}>{pet}</option>
+                ))}
+              </select>
+            </label>
           </div>
 
           {filtered.length === 0 ? (
@@ -1161,7 +1216,13 @@ function ProductCard({ p, onAdd, delay = 0 }) {
             />
           ))}
         </div>
-        {imageList.length > 1 && <span className="pcard-img-hint">Desliza</span>}
+        {imageList.length > 1 && (
+          <div className="pcard-dots" aria-hidden="true">
+            {imageList.map((src, index) => (
+              <span className="pcard-dot" key={`${src}-dot-${index}`} />
+            ))}
+          </div>
+        )}
         {p.tag1 && (
           <span className={`pcard-badge ${p.tag1==="Más vendido"?"gold-b":""}`}>
             {p.tag1}
