@@ -325,18 +325,25 @@ const buildOrderPayload = ({ orderId, customer, cart, shippingZone, shipCost, su
 };
 
 const submitOrderToSheets = async (payload) => {
-  // Apps Script requiere mode:"no-cors" desde el navegador para evitar
-  // el rechazo CORS del preflight. La respuesta será "opaque" (no legible),
-  // pero el script en el servidor sí se ejecuta y escribe en Sheets.
-  // Para confirmar el éxito se confía en que el script no lance excepción;
-  // si la URL es inaccesible, fetch lanzará un NetworkError que capturamos arriba.
-  await fetch(SHEETS_CONFIG.scriptUrl, {
+  const response = await fetch(SHEETS_CONFIG.scriptUrl, {
     method: "POST",
-    mode: "no-cors",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify(payload),
   });
-  // Con no-cors no podemos leer la respuesta; asumimos éxito si no hubo error de red.
+
+  if (!response.ok) throw new Error(`Order API ${response.status}`);
+
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    throw new Error("El registro del pedido no confirmó JSON");
+  }
+
+  const data = await response.json();
+  if (data?.ok === false || data?.success === false) {
+    throw new Error(data?.error || "No se pudo registrar el pedido");
+  }
+
+  return data;
 };
 
 const TRUST = [
@@ -981,7 +988,6 @@ export default function App() {
     ].join("\n");
     window.open(`https://wa.me/573158429286?text=${encodeURIComponent(body)}`, "_blank");
     toast("Pedido registrado. Te llevamos a WhatsApp.");
-    setCart([]);
     setOrderSaving(false);
   }, [cart, customer, orderSaving, shippingZone, subtotal, shipCost, grandTotal, toast]);
 
