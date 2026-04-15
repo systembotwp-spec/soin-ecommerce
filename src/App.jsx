@@ -903,7 +903,8 @@ export default function App() {
   [catalogProducts, search, filterPet, filterCat, filterSubcat]);
 
   /* checkout — encodeURIComponent en texto dinámico */
-  const handleCheckout = useCallback(async () => {
+const handleCheckout = useCallback(async () => {
+    // 1. Validaciones iniciales
     if (orderSaving) return;
 
     if (cart.length === 0) {
@@ -928,6 +929,7 @@ export default function App() {
       return;
     }
 
+    // 2. Preparación de datos
     const orderId = createOrderId();
     const orderPayload = buildOrderPayload({
       orderId,
@@ -941,44 +943,22 @@ export default function App() {
 
     setOrderSaving(true);
 
-    /*Aca estaba esta funcion --submitOrderToSheets*/
+    // 3. Intento de registro y cambio de vista
     try {
       await enviarPedidoASheets(orderPayload);
+      
+      // Si el envío es exitoso (o se lanza debido a no-cors):
+      setCart([]);             // Limpiamos carrito
+      setDrawerOpen(false);    // Cerramos el panel lateral
+      setView("SUCCESS");      // Cambiamos a la pantalla de éxito
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      
     } catch (error) {
-      toast("No pudimos registrar el pedido. Intenta de nuevo.");
+      console.error("Error al registrar pedido:", error);
+      toast("No pudimos registrar el pedido. Revisa tu conexión.");
+    } finally {
       setOrderSaving(false);
-      return;
     }
-
-    const lines = cart
-      .map((i) => {
-        const variant = i.presentation ? ` - ${i.presentation}` : "";
-        return `- ${i.name}${variant} x${i.qty} (${fmt((i.salePrice ?? i.price) * i.qty)})`;
-      })
-      .join("\n");
-    const ship = SHIPPING[shippingZone] === null ? "Sujeto a verificación" : fmt(shipCost);
-    const body = [
-      "¡Hola SOIN! 🐾",
-      "Confirmo pedido generado:",
-      `Pedido: ${orderId}`,
-      "",
-      lines,
-      "",
-      "Datos del comprador:",
-      `Nombre: ${customer.fullName.trim()}`,
-      `Celular: ${customer.phone.trim()}`,
-      `Dirección: ${customer.address.trim()}`,
-      `Pago: ${customer.paymentMethod}`,
-      "",
-      `Subtotal: ${fmt(subtotal)}`,
-      `Zona: ${shippingZone}`,
-      `Envío: ${ship}`,
-      `*TOTAL: ${fmt(grandTotal)}*`,
-    ].join("\n");
-    window.open(`https://wa.me/573158429286?text=${encodeURIComponent(body)}`, "_blank");
-    setCart([]);
-    toast("Pedido registrado.");
-    setOrderSaving(false);
   }, [cart, customer, orderSaving, shippingZone, subtotal, shipCost, grandTotal, toast]);
 
   useEffect(() => {
@@ -1005,6 +985,56 @@ export default function App() {
   return (
     <div className="soin-root">
       {injectStyles()}
+
+      /* ════════════════════════════════════════════════════════
+     RENDERIZADO DE VISTA DE ÉXITO (SUCCESS)
+  ════════════════════════════════════════════════════════ */
+  if (view === "SUCCESS") {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-700">
+        {/* Icono de Seguridad/Check */}
+        <div 
+          className="w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-sm"
+          style={{ backgroundColor: C.greenMist }}
+        >
+          <Shield className="text-green-600" size={48} />
+        </div>
+        
+        {/* Título Principal */}
+        <h2 
+          className="text-3xl font-bold mb-4" 
+          style={{ color: C.greenDark, fontFamily: 'Fraunces, serif' }}
+        >
+          ¡Pedido registrado con éxito!
+        </h2>
+        
+        {/* Mensaje de Confianza */}
+        <div className="max-w-md bg-white p-8 rounded-3xl shadow-sm border mb-8" style={{ borderColor: C.border }}>
+          <p className="text-lg text-gray-700 leading-relaxed" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+            Gracias por confiar en <strong>Soin Pets</strong>. Tu pedido ya está en nuestro sistema y 
+            <span className="block mt-2 font-medium" style={{ color: C.greenMid }}>
+              uno de nuestros agentes se pondrá en contacto contigo pronto para ultimar los detalles de tu entrega.
+            </span>
+          </p>
+        </div>
+
+        {/* Botón para volver */}
+        <button
+          onClick={() => setView("CATALOGO")}
+          className="flex items-center gap-3 px-10 py-4 rounded-full font-bold text-white shadow-lg transition-all hover:scale-105 active:scale-95"
+          style={{ backgroundColor: C.greenMid }}
+        >
+          <Plus size={20} />
+          Realizar otro pedido
+        </button>
+        
+        {/* Pie de página suave */}
+        <p className="mt-8 text-sm text-gray-400">
+          Soin Pets — Cuidamos lo que más amas.
+        </p>
+      </div>
+    );
+  }
 
       {/* NAV */}
       <nav className="nav">
