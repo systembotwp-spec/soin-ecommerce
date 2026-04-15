@@ -976,7 +976,8 @@ export default function App() {
       `*TOTAL: ${fmt(grandTotal)}*`,
     ].join("\n");
     window.open(`https://wa.me/573158429286?text=${encodeURIComponent(body)}`, "_blank");
-    toast("Pedido registrado. Te llevamos a WhatsApp.");
+    setCart([]);
+    toast("Pedido registrado.");
     setOrderSaving(false);
   }, [cart, customer, orderSaving, shippingZone, subtotal, shipCost, grandTotal, toast]);
 
