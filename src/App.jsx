@@ -290,7 +290,7 @@ const createOrderId = () => {
     const fecha = new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" });
     const data = {
       action: "createOrder",
-      sheets: { cliente: "Cliente", detalle: "Detallepedido" },
+      sheets: { cliente: "Cliente", detalle: "DetallePedido" },
       cliente: {
         pedidoId: orderId,
         fecha,
@@ -982,13 +982,10 @@ const handleCheckout = useCallback(async () => {
   const goTo = (v) => { setView(v); setDrawerOpen(false); window.scrollTo({ top:0, behavior:"smooth" }); };
   const resetFilters = () => { setSearch(""); setFilterPet(""); setFilterCat(""); setFilterSubcat(""); };
 
-  return (
-    <div className="soin-root">
-      {injectStyles()}
-
-      /* ════════════════════════════════════════════════════════
+  
+  {/* ════════════════════════════════════════════════════════
      RENDERIZADO DE VISTA DE ÉXITO (SUCCESS)
-  ════════════════════════════════════════════════════════ */
+  ════════════════════════════════════════════════════════ */}
   if (view === "SUCCESS") {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-700">
@@ -1020,7 +1017,7 @@ const handleCheckout = useCallback(async () => {
 
         {/* Botón para volver */}
         <button
-          onClick={() => setView("CATALOGO")}
+          onClick={() => setView("catalogo")}
           className="flex items-center gap-3 px-10 py-4 rounded-full font-bold text-white shadow-lg transition-all hover:scale-105 active:scale-95"
           style={{ backgroundColor: C.greenMid }}
         >
@@ -1035,6 +1032,10 @@ const handleCheckout = useCallback(async () => {
       </div>
     );
   }
+ 
+  return (
+    <div className="soin-root">
+      {injectStyles()}
 
       {/* NAV */}
       <nav className="nav">
