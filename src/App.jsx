@@ -1364,7 +1364,7 @@ const handleCheckout = useCallback(async () => {
                         </select>
                       </label>
                     </div>
-                    <p className="checkout-help">Estos datos se enviarán por WhatsApp junto con tu pedido.</p>
+                    <p className="checkout-help">Estos datos se guardaran junto con tu pedido.</p>
                   </div>
                 </>
               )}
@@ -1396,13 +1396,13 @@ const handleCheckout = useCallback(async () => {
                   onClick={shippingZone && !orderSaving ? handleCheckout : undefined}
                   disabled={!shippingZone || orderSaving}
                   aria-label={shippingZone
-                    ? "Finalizar pedido por WhatsApp"
+                    ? "Finalizar pedido"
                     : "Selecciona una zona de envío para continuar"}>
                   <MessageCircle size={18} aria-hidden="true" />
                   {orderSaving
                     ? "Registrando pedido..."
                     : shippingZone
-                      ? "Finalizar por WhatsApp"
+                      ? "Finalizar Pedido"
                       : "Elige zona de envío"}
                 </button>
               </div>
