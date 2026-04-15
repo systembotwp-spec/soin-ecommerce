@@ -332,7 +332,16 @@ const buildOrderPayload = ({ orderId, customer, cart, shippingZone, shipCost, su
   });*/
 
 const enviarPedidoASheets = async (datosPedido) => {
+  console.log("Enviando a:", SHEETS_CONFIG.scriptUrl); // <--- Verifica esto en la consola
   try {
+    await fetch(SHEETS_CONFIG.scriptUrl, { ... });
+    return true;
+  } catch (error) {
+    console.error("Error real capturado:", error); // <--- Esto te dirá el motivo exacto
+    throw error;
+  }
+};
+  /*try {
     // No guardamos el resultado en una constante porque será opaco
     await fetch(SHEETS_CONFIG.scriptUrl, {
       method: "POST",
@@ -346,7 +355,7 @@ const enviarPedidoASheets = async (datosPedido) => {
     console.error("Error de conexión:", error);
     throw error; // Solo falla si no hay red
   }
-};
+};*/
 
   if (!response.ok) throw new Error(`Order API ${response.status}`);
 
