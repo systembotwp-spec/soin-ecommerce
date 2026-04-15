@@ -988,7 +988,7 @@ export default function App() {
     const ship = SHIPPING[shippingZone] === null ? "Sujeto a verificación" : fmt(shipCost);
     const body = [
       "¡Hola SOIN! 🐾",
-      "Quiero hacer un pedido:",
+      "Confirmo pedido generado:",
       `Pedido: ${orderId}`,
       "",
       lines,
