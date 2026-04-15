@@ -846,6 +846,8 @@ export default function App() {
     toast("Producto eliminado del carrito");
   }, [setCart, toast]);
 
+  const [orderCompleted, setOrderCompleted] = useState(false);
+
   /* totales */
   const totalItems = cart.reduce((s, i) => s + i.qty, 0);
   const subtotal   = cart.reduce((s, i) => s + (i.salePrice ?? i.price) * i.qty, 0);
@@ -949,9 +951,7 @@ const handleCheckout = useCallback(async () => {
       
       // Si el envío es exitoso (o se lanza debido a no-cors):
       setCart([]);             // Limpiamos carrito
-      setDrawerOpen(false);    // Cerramos el panel lateral
-      setView("SUCCESS");      // Cambiamos a la pantalla de éxito
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      setOrderCompleted(true);
       
     } catch (error) {
       console.error("Error al registrar pedido:", error);
@@ -981,58 +981,7 @@ const handleCheckout = useCallback(async () => {
 
   const goTo = (v) => { setView(v); setDrawerOpen(false); window.scrollTo({ top:0, behavior:"smooth" }); };
   const resetFilters = () => { setSearch(""); setFilterPet(""); setFilterCat(""); setFilterSubcat(""); };
-
   
-  {/* ════════════════════════════════════════════════════════
-     RENDERIZADO DE VISTA DE ÉXITO (SUCCESS)
-  ════════════════════════════════════════════════════════ */}
-  if (view === "SUCCESS") {
-    return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-700">
-        {/* Icono de Seguridad/Check */}
-        <div 
-          className="w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-sm"
-          style={{ backgroundColor: C.greenMist }}
-        >
-          <Shield className="text-green-600" size={48} />
-        </div>
-        
-        {/* Título Principal */}
-        <h2 
-          className="text-3xl font-bold mb-4" 
-          style={{ color: C.greenDark, fontFamily: 'Fraunces, serif' }}
-        >
-          ¡Pedido registrado con éxito!
-        </h2>
-        
-        {/* Mensaje de Confianza */}
-        <div className="max-w-md bg-white p-8 rounded-3xl shadow-sm border mb-8" style={{ borderColor: C.border }}>
-          <p className="text-lg text-gray-700 leading-relaxed" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-            Gracias por confiar en <strong>Soin Pets</strong>. Tu pedido ya está en nuestro sistema y 
-            <span className="block mt-2 font-medium" style={{ color: C.greenMid }}>
-              uno de nuestros agentes se pondrá en contacto contigo pronto para ultimar los detalles de tu entrega.
-            </span>
-          </p>
-        </div>
-
-        {/* Botón para volver */}
-        <button
-          onClick={() => setView("catalogo")}
-          className="flex items-center gap-3 px-10 py-4 rounded-full font-bold text-white shadow-lg transition-all hover:scale-105 active:scale-95"
-          style={{ backgroundColor: C.greenMid }}
-        >
-          <Plus size={20} />
-          Realizar otro pedido
-        </button>
-        
-        {/* Pie de página suave */}
-        <p className="mt-8 text-sm text-gray-400">
-          Soin Pets — Cuidamos lo que más amas.
-        </p>
-      </div>
-    );
-  }
- 
   return (
     <div className="soin-root">
       {injectStyles()}
@@ -1412,6 +1361,96 @@ const handleCheckout = useCallback(async () => {
         </>
       )}
 
+
+      {/* Contenido del Carrito */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {orderCompleted ? (
+              /* ESTADO DE ÉXITO (Estilo similar a filtros vacíos del catálogo) */
+              <div className="flex flex-col items-center justify-center h-full text-center animate-in fade-in zoom-in duration-500">
+                <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-6">
+                  <Shield className="text-green-600" size={40} strokeWidth={1.5} />
+                </div>
+                <h3 className="text-xl font-bold mb-2" style={{ color: C.greenDark, fontFamily: 'Fraunces, serif' }}>
+                  ¡Pedido registrado!
+                </h3>
+                <p className="text-gray-500 text-sm mb-8 leading-relaxed max-w-[240px] mx-auto">
+                  Tu solicitud ha sido recibida correctamente. Uno de nuestros agentes se pondrá en contacto contigo pronto para ultimar los detalles.
+                </p>
+                <button
+                  onClick={() => {
+                    setOrderCompleted(false);
+                    setDrawerOpen(false);
+                  }}
+                  className="px-8 py-3 rounded-xl font-bold text-white transition-transform hover:scale-105 active:scale-95 shadow-sm"
+                  style={{ backgroundColor: C.greenMid }}
+                >
+                  Continuar navegando
+                </button>
+              </div>
+            ) : cart.length === 0 ? (
+              /* ESTADO VACÍO NORMAL */
+              <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                <PackageSearch size={64} strokeWidth={1} className="mb-4 opacity-20" />
+                <p className="text-lg font-medium">Tu carrito está esperando</p>
+                <p className="text-sm">Agrega productos para comenzar</p>
+              </div>
+            ) : (
+              /* LISTA DE PRODUCTOS */
+              <div className="space-y-4">
+                {cart.map((item) => (
+                  <div
+                    key={`${item.id}-${item.presentation}`}
+                    className="flex gap-4 p-3 rounded-2xl border border-gray-100 bg-white"
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-20 h-20 object-cover rounded-xl bg-gray-50"
+                    />
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-bold text-sm leading-tight" style={{ color: C.greenDark }}>
+                          {item.name}
+                        </h4>
+                        <button
+                          onClick={() => removeFromCart(item.id, item.presentation)}
+                          className="text-gray-300 hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      
+                      {item.presentation && (
+                        <p className="text-xs text-gray-500 mt-1">{item.presentation}</p>
+                      )}
+
+                      <div className="flex justify-between items-center mt-3">
+                        <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
+                          <button
+                            onClick={() => updateQty(item.id, item.presentation, -1)}
+                            className="p-1 hover:bg-white rounded-md transition-colors"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="w-6 text-center text-sm font-bold">{item.qty}</span>
+                          <button
+                            onClick={() => updateQty(item.id, item.presentation, 1)}
+                            className="p-1 hover:bg-white rounded-md transition-colors"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                        <span className="font-bold text-sm">
+                          {fmt((item.salePrice || item.price) * item.qty)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+      
       {/* WhatsApp flotante */}
       <a className="wa-btn tap" href="https://wa.me/573158429286"
         target="_blank" rel="noreferrer" aria-label="Contactar a SOIN por WhatsApp">
