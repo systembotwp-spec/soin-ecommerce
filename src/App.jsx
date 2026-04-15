@@ -38,25 +38,166 @@ const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Fraunces:it
 const fmt = (n) =>
   n == null ? "" : `$${Number(n).toLocaleString("es-CO")}`;
 
+const toMoneyNumber = (value) => {
+  if (value == null || value === "") return null;
+  if (typeof value === "number") return value;
+  const cleaned = value.toString().replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const normalizeCatalogLabel = (value = "") => {
+  const label = value.toString().trim();
+  const key = normalize(label);
+  if (key === "snaks" || key === "snack") return "Snacks";
+  if (key === "alimento") return "Alimentos";
+  return label;
+};
+
+const normalizePrices = (unitPrice, offerPrice) => {
+  if (offerPrice == null || offerPrice === unitPrice) {
+    return { price: unitPrice, salePrice: null };
+  }
+
+  return {
+    price: Math.max(unitPrice, offerPrice),
+    salePrice: Math.min(unitPrice, offerPrice),
+  };
+};
+
+const normalize = (value = "") =>
+  value
+    .toString()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
+
+const normalizeKey = (value = "") =>
+  normalize(value).replace(/[^a-z0-9]/g, "");
+
+const FALLBACK_IMG =
+  "https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=500&auto=format&fit=crop";
+
+const getProductVariants = (p) =>
+  p.variants?.length
+    ? p.variants
+    : [{
+        id: `${p.id}::${p.presentation || "Única"}`,
+        presentation: p.presentation || "Única",
+        price: p.price,
+        salePrice: p.salePrice ?? null,
+        img: p.img || "",
+        images: p.images || [],
+      }];
+
 /* ════════════════════════════════════════════════════════
    CATÁLOGO ESTANDARIZADO
-   Columnas Google Sheets (A→K):
+   Columnas Google Sheets (A→N):
      id | nombre | descripcion | categoria | subcategoria |
-     etiqueta1 | etiqueta2 | precioUnitario | precioOferta | estado | img
+     presentacion | etiqueta1 | etiqueta2 | precioUnitario |
+     precioOferta | estado | imagen1 | imagen2 | imagen3
 ════════════════════════════════════════════════════════ */
-export const rowToProduct = (row) => ({
-  id:          row[0],
-  name:        row[1],
-  description: row[2],
-  category:    row[3],
-  subcategory: row[4],
-  tag1:        row[5] || null,
-  tag2:        row[6] || null,
-  price:       Number(row[7]),
-  salePrice:   row[8] ? Number(row[8]) : null,
-  status:      row[9] || "activo",
-  img:         row[10] || "",
-});
+export const rowToProduct = (row) => {
+  const presentation = row[5] || "Única";
+  const { price, salePrice } = normalizePrices(
+    toMoneyNumber(row[8]) ?? 0,
+    toMoneyNumber(row[9])
+  );
+  const images = [row[11], row[12], row[13]].filter(Boolean);
+
+  return {
+    id:          row[0],
+    name:        row[1],
+    description: row[2],
+    category:    normalizeCatalogLabel(row[3]),
+    subcategory: normalizeCatalogLabel(row[4]),
+    presentation,
+    tag1:        row[6] || null,
+    tag2:        row[7] || null,
+    price,
+    salePrice,
+    status:      normalize(row[10] || "activo"),
+    img:         images[0] || "",
+    images,
+    variants: [{
+      id: `${row[0]}::${presentation}`,
+      presentation,
+      price,
+      salePrice,
+      img: images[0] || "",
+      images,
+    }],
+  };
+};
+
+export const rowsToProducts = (rows) => {
+  const grouped = new Map();
+
+  rows.map(rowToProduct).forEach((product) => {
+    const hasValidPrice = getProductVariants(product).some((v) => Number(v.price) > 0);
+    if (!product.id || !product.name || !hasValidPrice || product.status !== "activo") return;
+
+    const current = grouped.get(product.id);
+    if (!current) {
+      grouped.set(product.id, product);
+      return;
+    }
+
+    const variant = product.variants[0];
+    const exists = current.variants.some((v) => v.id === variant.id);
+    if (!exists) current.variants.push(variant);
+
+    current.images = Array.from(new Set([...(current.images || []), ...(product.images || [])]));
+    current.img = current.img || product.img;
+    current.tag1 = current.tag1 || product.tag1;
+    current.tag2 = current.tag2 || product.tag2;
+  });
+
+  return Array.from(grouped.values());
+};
+
+const objectToRow = (item) => {
+  const byKey = Object.entries(item || {}).reduce((acc, [key, value]) => {
+    acc[normalizeKey(key)] = value;
+    return acc;
+  }, {});
+
+  const pick = (...keys) => keys.map(normalizeKey).find((key) => byKey[key] != null && byKey[key] !== "");
+  const value = (...keys) => byKey[pick(...keys)] ?? "";
+
+  return [
+    value("id"),
+    value("nombre", "name"),
+    value("descripcion", "descripción", "description"),
+    value("categoria", "category"),
+    value("subcategoria", "subcategory"),
+    value("presentacion", "presentación", "presentation"),
+    value("etiqueta1", "tag1"),
+    value("etiqueta2", "tag2"),
+    value("precioUnitario", "precio unitario", "precio", "price"),
+    value("precioOferta", "precio oferta", "salePrice"),
+    value("estado", "status"),
+    value("imagen1", "img", "image", "image1"),
+    value("imagen2", "image2"),
+    value("imagen3", "image3"),
+  ];
+};
+
+const payloadToRows = (payload) => {
+  const source = Array.isArray(payload)
+    ? payload
+    : payload?.rows || payload?.values || payload?.data || payload?.catalogo || payload?.products || [];
+
+  if (!Array.isArray(source)) return [];
+
+  const rows = source.map((item) => Array.isArray(item) ? item : objectToRow(item));
+  const [firstRow] = rows;
+  const firstCell = normalizeKey(firstRow?.[0]);
+  const secondCell = normalizeKey(firstRow?.[1]);
+
+  return firstCell === "id" || secondCell === "nombre" ? rows.slice(1) : rows;
+};
 
 /* datos locales — misma forma que rowToProduct */
 const PRODUCTS = [
@@ -92,6 +233,12 @@ const PRODUCTS = [
     img:"https://images.unsplash.com/photo-1583947581924-860bda6a26df?w=500&auto=format&fit=crop" },
 ];
 
+const SHEETS_CONFIG = {
+  scriptUrl: "https://script.google.com/macros/s/AKfycbzLmc1aW6_EYcQLW8EcABdU-M3xGe1Iw3EiYkXULLqf2r0RF9W4eCY3QGTf_aXJhcho/exec",
+  deploymentId: "AKfycbzLmc1aW6_EYcQLW8EcABdU-M3xGe1Iw3EiYkXULLqf2r0RF9W4eCY3QGTf_aXJhcho",
+  sheetName: "Catalogo",
+};
+
 const SHIPPING = {
   "Zona Sur":       15000,
   "Zona Norte":     25000,
@@ -112,13 +259,14 @@ const TRUST = [
 /** Carrito persistido en localStorage */
 function usePersistedCart() {
   const [cart, setCartRaw] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("soin_cart") || "[]"); }
+    if (typeof window === "undefined") return [];
+    try { return JSON.parse(window.localStorage.getItem("soin_cart") || "[]"); }
     catch { return []; }
   });
   const setCart = useCallback((updater) => {
     setCartRaw((prev) => {
       const next = typeof updater === "function" ? updater(prev) : updater;
-      try { localStorage.setItem("soin_cart", JSON.stringify(next)); } catch {}
+      try { window.localStorage.setItem("soin_cart", JSON.stringify(next)); } catch {}
       return next;
     });
   }, []);
@@ -292,6 +440,7 @@ const injectStyles = () => (
     .eyebrow { font-family:var(--f-body); font-size:var(--t-label); font-weight:var(--w-semi); letter-spacing:var(--ls-label); text-transform:uppercase; color:${C.greenMid}; display:block; margin-bottom:10px; }
     .section-title { font-family:var(--f-display); font-size:var(--t-h2); font-weight:var(--w-reg); line-height:1.2; color:${C.greenDark}; }
     .section-title em { font-style:italic; color:${C.greenMid}; }
+    .catalog-msg { margin-top:10px; font-family:var(--f-body); font-size:var(--t-small); color:${C.textMuted}; }
 
     .featured-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; max-width:1100px; margin:0 auto 40px; }
     .products-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:20px; max-width:1100px; margin:0 auto; }
@@ -336,9 +485,21 @@ const injectStyles = () => (
       transition:transform .3s, box-shadow .3s, border-color .3s; display:flex; flex-direction:column;
     }
     .pcard:hover { transform:translateY(-5px); box-shadow:0 12px 32px rgba(45,74,53,.11); border-color:${C.greenLight}; }
-    .pcard-img-wrap { position:relative; overflow:hidden; }
-    .pcard-img { width:100%; height:190px; object-fit:cover; display:block; transition:transform .5s; }
+    .pcard-img-wrap { position:relative; overflow:hidden; background:${C.greenMist}; }
+    .pcard-img-scroll {
+      display:flex; overflow-x:auto; scroll-snap-type:x mandatory;
+      scrollbar-width:none; overscroll-behavior-x:contain;
+    }
+    .pcard-img-scroll::-webkit-scrollbar { display:none; }
+    .pcard-img { width:100%; height:190px; object-fit:cover; display:block; flex:0 0 100%; scroll-snap-align:start; transition:transform .5s; }
     .pcard:hover .pcard-img { transform:scale(1.04); }
+    .pcard-img-hint {
+      position:absolute; right:10px; bottom:10px;
+      background:rgba(45,74,53,.82); color:#fff; border-radius:50px;
+      padding:4px 9px; font-family:var(--f-body); font-size:9px;
+      font-weight:var(--w-bold); letter-spacing:.05em; text-transform:uppercase;
+      backdrop-filter:blur(6px);
+    }
     .pcard-badge {
       position:absolute; top:10px; left:10px; background:${C.greenDark}; color:#fff;
       font-family:var(--f-body); font-size:9px; font-weight:var(--w-bold); letter-spacing:var(--ls-label);
@@ -355,6 +516,18 @@ const injectStyles = () => (
     .pcard-price sub { font-family:var(--f-body); font-size:10px; font-weight:var(--w-reg); vertical-align:baseline; color:${C.textMuted}; }
     .pcard-price.sale { color:${C.greenMid}; }
     .pcard-price-orig { font-family:var(--f-body); font-size:11px; color:${C.textMuted}; text-decoration:line-through; font-weight:var(--w-reg); }
+    .variant-select {
+      width:100%; margin:0 0 12px; padding:9px 12px;
+      border:1.5px solid ${C.border}; border-radius:8px; background:#fff;
+      font-family:var(--f-body); font-size:var(--t-small); font-weight:var(--w-semi);
+      color:${C.greenDark}; outline:none; cursor:pointer;
+      transition:border-color .2s, box-shadow .2s;
+    }
+    .variant-select:focus { border-color:${C.greenMid}; box-shadow:0 0 0 3px rgba(74,122,90,.12); }
+    .variant-note {
+      font-family:var(--f-body); font-size:10px; color:${C.textMuted};
+      margin-bottom:8px; line-height:1.35;
+    }
     .add-btn { background:${C.greenDark}; color:#fff; border:none; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .2s, transform .15s; flex-shrink:0; }
     .add-btn:hover { background:${C.greenMid}; transform:scale(1.1); }
 
@@ -387,7 +560,7 @@ const injectStyles = () => (
 
     .ship-section { margin-top:26px; padding-top:18px; border-top:1px solid ${C.border}; }
     .ship-label { display:flex; align-items:center; gap:8px; font-family:var(--f-body); font-size:var(--t-label); font-weight:var(--w-semi); letter-spacing:var(--ls-label); text-transform:uppercase; color:${C.greenDark}; margin-bottom:12px; }
-    .ship-opt { padding:11px 15px; border:1.5px solid ${C.border}; border-radius:12px; margin-bottom:8px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-family:var(--f-body); font-size:var(--t-meta); font-weight:var(--w-reg); transition:all .2s; background:#fff; color:${C.text}; }
+    .ship-opt { width:100%; padding:11px 15px; border:1.5px solid ${C.border}; border-radius:12px; margin-bottom:8px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-family:var(--f-body); font-size:var(--t-meta); font-weight:var(--w-reg); transition:all .2s; background:#fff; color:${C.text}; text-align:left; }
     .ship-opt:hover { border-color:${C.greenLight}; }
     .ship-opt.chosen { border-color:${C.greenMid}; background:${C.greenMist}; font-weight:var(--w-semi); color:${C.greenDark}; }
     .ship-price { font-family:var(--f-display); font-size:var(--t-meta); font-weight:600; color:${C.greenMid}; }
@@ -407,6 +580,16 @@ const injectStyles = () => (
     .toast-wrap { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:8px; z-index:2000; pointer-events:none; }
     .toast { background:${C.greenDark}; color:#fff; padding:10px 22px; border-radius:50px; font-family:var(--f-body); font-size:var(--t-meta); font-weight:var(--w-semi); white-space:nowrap; box-shadow:0 6px 20px rgba(45,74,53,.3); border-left:3px solid ${C.gold}; animation:toastIn .35s cubic-bezier(.16,1,.3,1); }
     @keyframes toastIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration:.01ms !important;
+        animation-iteration-count:1 !important;
+        scroll-behavior:auto !important;
+        transition-duration:.01ms !important;
+      }
+    }
 
     /* ── WA ── */
     .wa-btn { position:fixed; bottom:28px; right:22px; background:${C.whatsapp}; color:#fff; width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 20px rgba(37,211,102,.4); z-index:999; text-decoration:none; transition:transform .2s, box-shadow .2s; }
@@ -466,6 +649,14 @@ const injectStyles = () => (
    APP COMPONENT
 ════════════════════════════════════════════════════════ */
 export default function App() {
+  const {
+    products: sheetsProducts,
+    loading: catalogLoading,
+    error: catalogError,
+    warnings: catalogWarnings,
+  } = useSheetsCatalog(SHEETS_CONFIG);
+  const sheetsEnabled = Boolean(SHEETS_CONFIG.scriptUrl);
+  const catalogProducts = sheetsProducts.length ? sheetsProducts : PRODUCTS;
   const [cart, setCart]             = usePersistedCart();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [view, setView]             = useState("inicio");
@@ -479,52 +670,71 @@ export default function App() {
   /* carrito */
   const addToCart = useCallback((p) => {
     setCart((c) => {
-      const ex = c.find((i) => i.id === p.id);
+      const key = p.cartId || p.id;
+      const ex = c.find((i) => (i.cartId || i.id) === key);
       return ex
-        ? c.map((i) => (i.id === p.id ? { ...i, qty: i.qty + 1 } : i))
-        : [...c, { ...p, qty: 1 }];
+        ? c.map((i) => ((i.cartId || i.id) === key ? { ...i, qty: i.qty + 1 } : i))
+        : [...c, { ...p, cartId: key, qty: 1 }];
     });
     shake();
-    toast(`✓ ${p.name} agregado`);
+    toast(`✓ ${p.name}${p.presentation ? ` (${p.presentation})` : ""} agregado`);
   }, [setCart, shake, toast]);
 
   const updateQty = useCallback((id, d) =>
     setCart((c) =>
-      c.map((i) => (i.id === id ? { ...i, qty: Math.max(0, i.qty + d) } : i))
+      c.map((i) => ((i.cartId || i.id) === id ? { ...i, qty: Math.max(0, i.qty + d) } : i))
        .filter((i) => i.qty > 0)
     ), [setCart]);
 
   const removeItem = useCallback((id) => {
-    setCart((c) => c.filter((i) => i.id !== id));
+    setCart((c) => c.filter((i) => (i.cartId || i.id) !== id));
     toast("Producto eliminado del carrito");
   }, [setCart, toast]);
 
   /* totales */
   const totalItems = cart.reduce((s, i) => s + i.qty, 0);
   const subtotal   = cart.reduce((s, i) => s + (i.salePrice ?? i.price) * i.qty, 0);
-  const shipCost   = shippingZone ? (SHIPPING[shippingZone] ?? 0) : 0;
+  const shippingNeedsQuote = shippingZone && SHIPPING[shippingZone] === null;
+  const shipCost   = shippingZone && !shippingNeedsQuote ? SHIPPING[shippingZone] : 0;
   const grandTotal = subtotal + shipCost;
 
   /* filtrado — busca también en descripción y etiquetas */
   const filtered = useMemo(() =>
-    PRODUCTS.filter((p) => {
+    catalogProducts.filter((p) => {
       if (p.status !== "activo") return false;
-      const q = search.toLowerCase();
-      const matchS = !q ||
-        p.name.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q) ||
-        (p.tag1||"").toLowerCase().includes(q) ||
-        (p.tag2||"").toLowerCase().includes(q);
+      const q = normalize(search);
+      const matchS = !q || [
+        p.name,
+        p.description,
+        p.category,
+        p.subcategory,
+        p.tag1,
+        p.tag2,
+        ...getProductVariants(p).map((v) => v.presentation),
+      ].map(normalize).join(" ").includes(q);
       const matchP = filterPet === "Todos" || p.subcategory === filterPet || p.subcategory === "Todos";
       const matchC = filterCat === "Todos" || p.category === filterCat;
       return matchS && matchP && matchC;
     }),
-  [search, filterPet, filterCat]);
+  [catalogProducts, search, filterPet, filterCat]);
 
   /* checkout — encodeURIComponent en texto dinámico */
   const handleCheckout = useCallback(() => {
+    if (cart.length === 0) {
+      toast("Agrega productos antes de finalizar");
+      return;
+    }
+
+    if (!shippingZone) {
+      toast("Elige una zona de envío para continuar");
+      return;
+    }
+
     const lines = cart
-      .map((i) => `- ${i.name} x${i.qty} (${fmt((i.salePrice ?? i.price) * i.qty)})`)
+      .map((i) => {
+        const variant = i.presentation ? ` - ${i.presentation}` : "";
+        return `- ${i.name}${variant} x${i.qty} (${fmt((i.salePrice ?? i.price) * i.qty)})`;
+      })
       .join("\n");
     const ship = SHIPPING[shippingZone] === null ? "Sujeto a verificación" : fmt(shipCost);
     const body = [
@@ -539,7 +749,25 @@ export default function App() {
       `*TOTAL: ${fmt(grandTotal)}*`,
     ].join("\n");
     window.open(`https://wa.me/573158429286?text=${encodeURIComponent(body)}`, "_blank");
-  }, [cart, shippingZone, subtotal, shipCost, grandTotal]);
+  }, [cart, shippingZone, subtotal, shipCost, grandTotal, toast]);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setDrawerOpen(false);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [drawerOpen]);
 
   const goTo = (v) => { setView(v); setDrawerOpen(false); window.scrollTo({ top:0, behavior:"smooth" }); };
   const resetFilters = () => { setSearch(""); setFilterPet("Todos"); setFilterCat("Todos"); };
@@ -625,7 +853,7 @@ export default function App() {
               <h2 className="section-title" id="dest-h">Productos <em>Destacados</em></h2>
             </div>
             <div className="featured-grid">
-              {PRODUCTS.filter(p => p.status==="activo").slice(0,4).map((p,i) => (
+              {catalogProducts.filter(p => p.status==="activo").slice(0,4).map((p,i) => (
                 <ProductCard key={p.id} p={p} onAdd={addToCart} delay={i*60} />
               ))}
             </div>
@@ -647,6 +875,11 @@ export default function App() {
           <div className="section-header">
             <span className="eyebrow">Catálogo SOIN</span>
             <h2 className="section-title" id="cat-h">Todos los <em>Productos</em></h2>
+            {sheetsEnabled && catalogLoading && <p className="catalog-msg">Actualizando catálogo...</p>}
+            {sheetsEnabled && catalogError && <p className="catalog-msg">No pudimos cargar Sheets. Mostrando catálogo local.</p>}
+            {sheetsEnabled && !catalogError && catalogWarnings.length > 0 && (
+              <p className="catalog-msg">Algunas filas del catálogo no tienen la información completa.</p>
+            )}
           </div>
 
           <div className="search-wrap" role="search">
@@ -741,24 +974,33 @@ export default function App() {
               ) : (
                 <>
                   {cart.map(item => (
-                    <div key={item.id} className="cart-item">
-                      <img className="ci-img" src={item.img} alt={item.name} loading="lazy" />
+                    <div key={item.cartId || item.id} className="cart-item">
+                      <img
+                        className="ci-img"
+                        src={item.img || FALLBACK_IMG}
+                        alt={item.name}
+                        loading="lazy"
+                        onError={(event) => { event.currentTarget.src = FALLBACK_IMG; }}
+                      />
                       <div>
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
-                          <p className="ci-name">{item.name}</p>
-                          <button className="del-btn tap" onClick={() => removeItem(item.id)}
+                          <div>
+                            <p className="ci-name">{item.name}</p>
+                            {item.presentation && <p className="variant-note">{item.presentation}</p>}
+                          </div>
+                          <button className="del-btn tap" onClick={() => removeItem(item.cartId || item.id)}
                             aria-label={`Eliminar ${item.name} del carrito`}>
                             <Trash2 size={14} aria-hidden="true" />
                           </button>
                         </div>
                         <div className="ci-controls">
                           <div className="qty-row">
-                            <button className="qty-btn tap" onClick={() => updateQty(item.id,-1)}
+                            <button className="qty-btn tap" onClick={() => updateQty(item.cartId || item.id,-1)}
                               aria-label={`Quitar una unidad de ${item.name}`}>
                               <Minus size={12} aria-hidden="true" />
                             </button>
                             <span className="qty-val" aria-label={`${item.qty} unidades`}>{item.qty}</span>
-                            <button className="qty-btn tap" onClick={() => updateQty(item.id,1)}
+                            <button className="qty-btn tap" onClick={() => updateQty(item.cartId || item.id,1)}
                               aria-label={`Agregar una unidad de ${item.name}`}>
                               <Plus size={12} aria-hidden="true" />
                             </button>
@@ -774,16 +1016,16 @@ export default function App() {
                       <Truck size={16} color={C.greenMid} aria-hidden="true" /> Zona de envío
                     </p>
                     {Object.entries(SHIPPING).map(([zone, cost]) => (
-                      <div key={zone}
+                      <button key={zone}
+                        type="button"
                         className={`ship-opt tap ${shippingZone===zone?"chosen":""}`}
                         onClick={() => setShipping(zone)}
-                        role="radio" aria-checked={shippingZone===zone} tabIndex={0}
-                        onKeyDown={e => e.key==="Enter" && setShipping(zone)}>
+                        aria-pressed={shippingZone===zone}>
                         <span>{zone}</span>
                         <span className="ship-price">
                           {cost===null ? "Por confirmar" : fmt(cost)}
                         </span>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </>
@@ -806,7 +1048,9 @@ export default function App() {
                   </div>
                   <div className="total-grand">
                     <span className="total-grand-label">Total</span>
-                    <span className="total-grand-value">{fmt(grandTotal)}</span>
+                    <span className="total-grand-value">
+                      {shippingNeedsQuote ? `${fmt(subtotal)} + envío` : fmt(grandTotal)}
+                    </span>
                   </div>
                 </div>
                 <button
@@ -843,17 +1087,57 @@ export default function App() {
    PRODUCT CARD
 ════════════════════════════════════════════════════════ */
 function ProductCard({ p, onAdd, delay = 0 }) {
-  const displayPrice = p.salePrice ?? p.price;
-  const hasDiscount  = p.salePrice != null && p.salePrice < p.price;
+  const variants = getProductVariants(p);
+  const [variantIndex, setVariantIndex] = useState(0);
+  const selectedVariant = variants[variantIndex] || variants[0];
+  const displayPrice = selectedVariant.salePrice ?? selectedVariant.price;
+  const hasDiscount  = selectedVariant.salePrice != null && selectedVariant.salePrice < selectedVariant.price;
+  const productImages = Array.from(new Set([
+    ...(selectedVariant.images || []),
+    selectedVariant.img,
+    ...(p.images || []),
+    p.img,
+  ].filter(Boolean))).slice(0, 3);
+  const imageList = productImages.length ? productImages : [FALLBACK_IMG];
+  const productImage = imageList[0];
+
+  const handleAdd = () => {
+    onAdd({
+      ...p,
+      cartId: selectedVariant.id,
+      presentation: selectedVariant.presentation,
+      price: selectedVariant.price,
+      salePrice: selectedVariant.salePrice,
+      img: productImage,
+      variants: undefined,
+      images: undefined,
+    });
+  };
 
   return (
     <article className="pcard" role="listitem"
       style={{animationDelay:`${delay}ms`, animation:"fadeUp .45s ease both"}}>
-      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
       <div className="pcard-img-wrap">
-        <img className="pcard-img" src={p.img} alt={p.name}
-          loading="lazy" width="400" height="190" />
+        <div
+          className="pcard-img-scroll"
+          key={selectedVariant.id}
+          aria-label={`Imágenes de ${p.name}`}
+        >
+          {imageList.map((src, index) => (
+            <img
+              key={`${src}-${index}`}
+              className="pcard-img"
+              src={src}
+              alt={index === 0 ? p.name : `${p.name} imagen ${index + 1}`}
+              loading="lazy"
+              width="400"
+              height="190"
+              onError={(event) => { event.currentTarget.src = FALLBACK_IMG; }}
+            />
+          ))}
+        </div>
+        {imageList.length > 1 && <span className="pcard-img-hint">Desliza</span>}
         {p.tag1 && (
           <span className={`pcard-badge ${p.tag1==="Más vendido"?"gold-b":""}`}>
             {p.tag1}
@@ -867,6 +1151,22 @@ function ProductCard({ p, onAdd, delay = 0 }) {
           <h3 className="pcard-name">{p.name}</h3>
           <p className="pcard-desc">{p.description}</p>
         </div>
+        {variants.length > 1 ? (
+          <select
+            className="variant-select"
+            value={variantIndex}
+            onChange={(event) => setVariantIndex(Number(event.target.value))}
+            aria-label={`Elegir presentación de ${p.name}`}
+          >
+            {variants.map((variant, index) => (
+              <option key={variant.id} value={index}>
+                {variant.presentation} · {fmt(variant.salePrice ?? variant.price)}
+              </option>
+            ))}
+          </select>
+        ) : selectedVariant.presentation !== "Única" ? (
+          <p className="variant-note">{selectedVariant.presentation}</p>
+        ) : null}
         <div className="pcard-footer">
           <div className="pcard-prices">
             <p className={`pcard-price${hasDiscount?" sale":""}`}
@@ -875,13 +1175,13 @@ function ProductCard({ p, onAdd, delay = 0 }) {
             </p>
             {hasDiscount && (
               <span className="pcard-price-orig"
-                aria-label={`Precio original: ${fmt(p.price)}`}>
-                {fmt(p.price)}
+                aria-label={`Precio original: ${fmt(selectedVariant.price)}`}>
+                {fmt(selectedVariant.price)}
               </span>
             )}
           </div>
-          <button className="add-btn tap" onClick={() => onAdd(p)}
-            aria-label={`Agregar ${p.name} al carrito`}>
+          <button className="add-btn tap" onClick={handleAdd}
+            aria-label={`Agregar ${p.name} ${selectedVariant.presentation} al carrito`}>
             <Plus size={17} aria-hidden="true" />
           </button>
         </div>
@@ -895,47 +1195,87 @@ function ProductCard({ p, onAdd, delay = 0 }) {
    ────────────────────────────────────────────────────────
    Estructura de la hoja "Catalogo" (fila 1 = encabezados):
 
-   A         B        C             D          E             F          G          H                I              J        K
-   id | nombre | descripcion | categoria | subcategoria | etiqueta1 | etiqueta2 | precioUnitario | precioOferta | estado | img
+   A  id
+   B  nombre
+   C  descripcion
+   D  categoria
+   E  subcategoria
+   F  presentacion
+   G  etiqueta1
+   H  etiqueta2
+   I  precioUnitario
+   J  precioOferta
+   K  estado
+   L  imagen1
+   M  imagen2
+   N  imagen3
+
+   Para manejar varias presentaciones, repite el mismo id en varias filas
+   y cambia presentacion/precios. La app las agrupa en una sola tarjeta.
 
    Estados válidos : "activo" | "inactivo" | "agotado"
    precioOferta    : dejar vacío si no hay descuento
 
    Cómo activar:
-     1. Archivo → Compartir → Publicar en la web (hoja "Catalogo")
-     2. Copiar el Spreadsheet ID de la URL del archivo
-     3. En Google Cloud Console: crear proyecto → habilitar Sheets API → crear API key (solo lectura)
-     4. En tu App.jsx raíz: importar useSheetsCatalog y reemplazar PRODUCTS:
-          const { products, loading } = useSheetsCatalog("SPREADSHEET_ID", "Catalogo", "API_KEY");
-          if (loading) return <p>Cargando catálogo…</p>;
-════════════════════════════════════════════════════════ 
-export function useSheetsCatalog(spreadsheetId, sheetName = "Catalogo", apiKey = "") {
+     1. Publicar Apps Script como Web App.
+     2. Ejecutar como: tu usuario.
+     3. Acceso: cualquier persona.
+     4. Pegar la URL /exec en SHEETS_CONFIG.scriptUrl.
+        Mientras falle o venga vacío, la app usa PRODUCTS como respaldo local.
+════════════════════════════════════════════════════════ */
+export function useSheetsCatalog(config = {}) {
   const [products, setProducts] = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState(null);
+  const [warnings, setWarnings] = useState([]);
 
   useEffect(() => {
-    if (!spreadsheetId || !apiKey) { setLoading(false); return; }
-    const url =
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}` +
-      `/values/${encodeURIComponent(sheetName)}?key=${encodeURIComponent(apiKey)}`;
+    if (!config.scriptUrl) { setLoading(false); return; }
 
-    fetch(url)
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    setWarnings([]);
+
+    const url = new URL(config.scriptUrl);
+    if (config.sheetName) url.searchParams.set("sheet", config.sheetName);
+
+    fetch(url.toString(), { signal: controller.signal })
       .then((r) => {
-        if (!r.ok) throw new Error(`Sheets API ${r.status}`);
+        if (!r.ok) throw new Error(`Catalog API ${r.status}`);
+        const contentType = r.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) {
+          throw new Error("El Apps Script debe responder JSON y estar publicado para acceso público");
+        }
         return r.json();
       })
       .then((data) => {
-        const [, ...rows] = data.values ?? [];
-        setProducts(
-          rows
-            .map(rowToProduct)
-            .filter((p) => p.status === "activo")
+        const rows = payloadToRows(data);
+        const nextProducts = rowsToProducts(rows);
+        const validVariantCount = nextProducts.reduce(
+          (total, product) => total + getProductVariants(product).length,
+          0
         );
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [spreadsheetId, sheetName, apiKey]);
+        const invalidRows = Math.max(0, rows.length - validVariantCount);
 
-  return { products, loading, error };
-} */
+        if (!rows.length) throw new Error("El catálogo no devolvió filas");
+        if (!nextProducts.length) throw new Error("El catálogo no tiene productos activos válidos");
+
+        setWarnings(invalidRows > 0 ? [`${invalidRows} filas incompletas o inactivas`] : []);
+        setProducts(nextProducts);
+      })
+      .catch((e) => {
+        if (e.name !== "AbortError") {
+          setProducts([]);
+          setError(e.message);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [config.scriptUrl, config.sheetName]);
+
+  return { products, loading, error, warnings };
+}
