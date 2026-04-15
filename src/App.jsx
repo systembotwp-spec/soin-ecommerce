@@ -376,6 +376,7 @@ const enviarPedidoASheets = async (datosPedido) => {
   }
 
   return data;
+};
 
 const TRUST = [
   { icon: Leaf,   title:"Productos Naturales",  sub:"Alta calidad"  },
