@@ -285,54 +285,53 @@ const createOrderId = () => {
   return `SOIN-${stamp}-${random}`;
 };
 
-/* --- CORRECCIÓN DE buildOrderPayload Y enviarPedidoASheets --- */
-  const buildOrderPayload = ({ orderId, customer, cart, shippingZone, shipCost, subtotal, grandTotal }) => {
-    const fecha = new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" });
-    const data = {
-      action: "createOrder",
-      sheets: { cliente: "Cliente", detalle: "DetallePedido" },
-      cliente: {
-        pedidoId: orderId,
-        fecha,
-        nombreCompleto: customer.fullName.trim(),
-        celular: customer.phone.trim(),
-        direccionEntrega: customer.address.trim(),
-        zonaEnvio: shippingZone,
-        tipoPago: customer.paymentMethod,
-        subtotal,
-        envio: shipCost,
-        total: grandTotal,
-        estado: "Pendiente",
-      },
-      detalle: cart.map((item) => ({
-        pedidoId: orderId,
-        fecha,
-        item: item.id,
-        productoId: item.id,
-        producto: item.name,
-        presentacion: item.presentation || "Única",
-        cantidad: item.qty,
-        precioUnitario: item.salePrice || item.price,
-        subtotalLinea: (item.salePrice || item.price) * item.qty,
-      })),
-    };
-    return data;
-  }; 
-
-  const enviarPedidoASheets = async (datosPedido) => {
-    try {
-      await fetch(SHEETS_CONFIG.scriptUrl, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(datosPedido),
-      });
-      return true;
-    } catch (error) {
-      console.error("Error de conexión:", error);
-      throw error;
-    }
+/* --- buildOrderPayload y enviarPedidoASheets a nivel de módulo --- */
+const buildOrderPayload = ({ orderId, customer, cart, shippingZone, shipCost, subtotal, grandTotal }) => {
+  const fecha = new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" });
+  return {
+    action: "createOrder",
+    sheets: { cliente: "Cliente", detalle: "DetallePedido" },
+    cliente: {
+      pedidoId: orderId,
+      fecha,
+      nombreCompleto: customer.fullName.trim(),
+      celular: customer.phone.trim(),
+      direccionEntrega: customer.address.trim(),
+      zonaEnvio: shippingZone,
+      tipoPago: customer.paymentMethod,
+      subtotal,
+      envio: shipCost,
+      total: grandTotal,
+      estado: "Pendiente",
+    },
+    detalle: cart.map((item) => ({
+      pedidoId: orderId,
+      fecha,
+      item: item.id,
+      productoId: item.id,
+      producto: item.name,
+      presentacion: item.presentation || "Única",
+      cantidad: item.qty,
+      precioUnitario: item.salePrice ?? item.price,
+      subtotalLinea: (item.salePrice ?? item.price) * item.qty,
+    })),
   };
+};
+
+const enviarPedidoASheets = async (datosPedido) => {
+  try {
+    await fetch(SHEETS_CONFIG.scriptUrl, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(datosPedido),
+    });
+    return true;
+  } catch (error) {
+    console.error("Error de conexión:", error);
+    throw error;
+  }
+};
 
 const TRUST = [
   { icon: Leaf,   title:"Productos Naturales",  sub:"Alta calidad"  },
@@ -701,6 +700,41 @@ const injectStyles = () => (
     .checkout-btn.ready:hover { background:${C.greenMid}; transform:translateY(-1px); }
     .checkout-btn.blocked { background:#ddd; color:#aaa; cursor:not-allowed; }
 
+    /* ── ORDER SUCCESS ── */
+    .order-success {
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      padding:48px 24px; text-align:center; gap:0;
+    }
+    .order-success-icon {
+      width:76px; height:76px; border-radius:50%;
+      background:${C.greenMist}; border:2px solid ${C.greenPale};
+      display:flex; align-items:center; justify-content:center;
+      margin-bottom:22px;
+      animation:popIn .4s cubic-bezier(.34,1.56,.64,1);
+    }
+    .order-success h3 {
+      font-family:var(--f-display); font-size:22px; font-weight:var(--w-reg);
+      color:${C.greenDark}; margin-bottom:12px; line-height:1.2;
+    }
+    .order-success p {
+      font-family:var(--f-body); font-size:var(--t-meta); color:${C.textMuted};
+      line-height:1.75; max-width:270px; margin-bottom:28px;
+    }
+    .order-success-id {
+      font-family:var(--f-body); font-size:var(--t-small); font-weight:var(--w-semi);
+      color:${C.greenMid}; background:${C.greenMist}; border-radius:50px;
+      padding:6px 16px; margin-bottom:28px; letter-spacing:.04em;
+    }
+    .order-catalog-btn {
+      width:100%; padding:14px; border-radius:50px; border:none;
+      background:${C.greenDark}; color:#fff;
+      font-family:var(--f-body); font-size:var(--t-btn); font-weight:var(--w-bold);
+      letter-spacing:var(--ls-btn); text-transform:uppercase;
+      cursor:pointer; transition:background .2s, transform .15s;
+      display:flex; align-items:center; justify-content:center; gap:9px;
+    }
+    .order-catalog-btn:hover { background:${C.greenMid}; transform:translateY(-1px); }
+
     /* ── TOASTS ── */
     .toast-wrap { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:8px; z-index:2000; pointer-events:none; }
     .toast { background:${C.greenDark}; color:#fff; padding:10px 22px; border-radius:50px; font-family:var(--f-body); font-size:var(--t-meta); font-weight:var(--w-semi); white-space:nowrap; box-shadow:0 6px 20px rgba(45,74,53,.3); border-left:3px solid ${C.gold}; animation:toastIn .35s cubic-bezier(.16,1,.3,1); }
@@ -948,11 +982,10 @@ const handleCheckout = useCallback(async () => {
     // 3. Intento de registro y cambio de vista
     try {
       await enviarPedidoASheets(orderPayload);
-      
-      // Si el envío es exitoso (o se lanza debido a no-cors):
-      setCart([]);             // Limpiamos carrito
+      setCart([]);
+      setShipping("");
+      setCustomer({ fullName: "", phone: "", address: "", paymentMethod: "" });
       setOrderCompleted(true);
-      
     } catch (error) {
       console.error("Error al registrar pedido:", error);
       toast("No pudimos registrar el pedido. Revisa tu conexión.");
@@ -1198,7 +1231,30 @@ const handleCheckout = useCallback(async () => {
             </div>
 
             <div className="drawer-body">
-              {cart.length === 0 ? (
+              {orderCompleted ? (
+                <div className="order-success" role="status" aria-live="polite">
+                  <div className="order-success-icon">
+                    <Shield size={36} color={C.greenMid} aria-hidden="true" />
+                  </div>
+                  <h3>¡Pedido registrado! 🐾</h3>
+                  <p>
+                    Tu solicitud fue recibida correctamente. Un agente de SOIN se comunicará contigo
+                    muy pronto para ultimar los detalles del envío y el pago.
+                  </p>
+                  <button
+                    className="order-catalog-btn tap"
+                    onClick={() => {
+                      setOrderCompleted(false);
+                      setDrawerOpen(false);
+                      goTo("catalogo");
+                    }}
+                    aria-label="Ir al catálogo para generar otro pedido"
+                  >
+                    <ShoppingCart size={16} aria-hidden="true" />
+                    Ver catálogo y hacer otro pedido
+                  </button>
+                </div>
+              ) : cart.length === 0 ? (
                 <div className="empty-state" role="status">
                   <ShoppingCart size={52} color={C.greenPale} aria-hidden="true" />
                   <p className="empty-txt">El carrito está vacío</p>
@@ -1362,95 +1418,6 @@ const handleCheckout = useCallback(async () => {
       )}
 
 
-      {/* Contenido del Carrito */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {orderCompleted ? (
-              /* ESTADO DE ÉXITO (Estilo similar a filtros vacíos del catálogo) */
-              <div className="flex flex-col items-center justify-center h-full text-center animate-in fade-in zoom-in duration-500">
-                <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-6">
-                  <Shield className="text-green-600" size={40} strokeWidth={1.5} />
-                </div>
-                <h3 className="text-xl font-bold mb-2" style={{ color: C.greenDark, fontFamily: 'Fraunces, serif' }}>
-                  ¡Pedido registrado!
-                </h3>
-                <p className="text-gray-500 text-sm mb-8 leading-relaxed max-w-[240px] mx-auto">
-                  Tu solicitud ha sido recibida correctamente. Uno de nuestros agentes se pondrá en contacto contigo pronto para ultimar los detalles.
-                </p>
-                <button
-                  onClick={() => {
-                    setOrderCompleted(false);
-                    setDrawerOpen(false);
-                  }}
-                  className="px-8 py-3 rounded-xl font-bold text-white transition-transform hover:scale-105 active:scale-95 shadow-sm"
-                  style={{ backgroundColor: C.greenMid }}
-                >
-                  Continuar navegando
-                </button>
-              </div>
-            ) : cart.length === 0 ? (
-              /* ESTADO VACÍO NORMAL */
-              <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                <PackageSearch size={64} strokeWidth={1} className="mb-4 opacity-20" />
-                <p className="text-lg font-medium">Tu carrito está esperando</p>
-                <p className="text-sm">Agrega productos para comenzar</p>
-              </div>
-            ) : (
-              /* LISTA DE PRODUCTOS */
-              <div className="space-y-4">
-                {cart.map((item) => (
-                  <div
-                    key={`${item.id}-${item.presentation}`}
-                    className="flex gap-4 p-3 rounded-2xl border border-gray-100 bg-white"
-                  >
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-20 h-20 object-cover rounded-xl bg-gray-50"
-                    />
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <h4 className="font-bold text-sm leading-tight" style={{ color: C.greenDark }}>
-                          {item.name}
-                        </h4>
-                        <button
-                          onClick={() => removeFromCart(item.id, item.presentation)}
-                          className="text-gray-300 hover:text-red-400 transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                      
-                      {item.presentation && (
-                        <p className="text-xs text-gray-500 mt-1">{item.presentation}</p>
-                      )}
-
-                      <div className="flex justify-between items-center mt-3">
-                        <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
-                          <button
-                            onClick={() => updateQty(item.id, item.presentation, -1)}
-                            className="p-1 hover:bg-white rounded-md transition-colors"
-                          >
-                            <Minus size={14} />
-                          </button>
-                          <span className="w-6 text-center text-sm font-bold">{item.qty}</span>
-                          <button
-                            onClick={() => updateQty(item.id, item.presentation, 1)}
-                            className="p-1 hover:bg-white rounded-md transition-colors"
-                          >
-                            <Plus size={14} />
-                          </button>
-                        </div>
-                        <span className="font-bold text-sm">
-                          {fmt((item.salePrice || item.price) * item.qty)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-      
       {/* WhatsApp flotante */}
       <a className="wa-btn tap" href="https://wa.me/573158429286"
         target="_blank" rel="noreferrer" aria-label="Contactar a SOIN por WhatsApp">
