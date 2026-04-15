@@ -332,12 +332,18 @@ const buildOrderPayload = ({ orderId, customer, cart, shippingZone, shipCost, su
   });*/
 
 const enviarPedidoASheets = async (datosPedido) => {
-  console.log("Enviando a:", SHEETS_CONFIG.scriptUrl); // <--- Verifica esto en la consola
+  console.log("Enviando a:", SHEETS_CONFIG.scriptUrl);
   try {
-    await fetch(SHEETS_CONFIG.scriptUrl, { ... });
+    await fetch(SHEETS_CONFIG.scriptUrl, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(datosPedido),
+    });
+    // Como es no-cors, no podemos leer la respuesta, pero si llegamos aquí, se envió
     return true;
   } catch (error) {
-    console.error("Error real capturado:", error); // <--- Esto te dirá el motivo exacto
+    console.error("Error real capturado:", error);
     throw error;
   }
 };
