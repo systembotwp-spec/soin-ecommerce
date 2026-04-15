@@ -285,98 +285,54 @@ const createOrderId = () => {
   return `SOIN-${stamp}-${random}`;
 };
 
-const buildOrderPayload = ({ orderId, customer, cart, shippingZone, shipCost, subtotal, grandTotal }) => {
-  const createdAt = new Date().toISOString();
-
-  return {
-    action: SHEETS_CONFIG.ordersAction,
-    sheets: {
-      cliente: SHEETS_CONFIG.clientePage,
-      detalle: SHEETS_CONFIG.detallePage,
-    },
-    cliente: {
-      pedidoId: orderId,
-      fecha: createdAt,
-      nombreCompleto: customer.fullName.trim(),
-      celular: customer.phone.trim(),
-      direccionEntrega: customer.address.trim(),
-      zonaEnvio: shippingZone,
-      tipoPago: customer.paymentMethod,
-      subtotal,
-      envio: SHIPPING[shippingZone] === null ? "" : shipCost,
-      total: grandTotal,
-      estado: "nuevo",
-    },
-    detalle: cart.map((item, index) => {
-      const unitPrice = item.salePrice ?? item.price;
-      return {
+/* --- CORRECCIÓN DE buildOrderPayload Y enviarPedidoASheets --- */
+  const buildOrderPayload = ({ orderId, customer, cart, shippingZone, shipCost, subtotal, grandTotal }) => {
+    const fecha = new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" });
+    const data = {
+      action: "createOrder",
+      sheets: { cliente: "Cliente", detalle: "Detallepedido" },
+      cliente: {
         pedidoId: orderId,
-        fecha: createdAt,
-        item: index + 1,
+        fecha,
+        nombreCompleto: customer.fullName.trim(),
+        celular: customer.phone.trim(),
+        direccionEntrega: customer.address.trim(),
+        zonaEnvio: shippingZone,
+        tipoPago: customer.paymentMethod,
+        subtotal,
+        envio: shipCost,
+        total: grandTotal,
+        estado: "Pendiente",
+      },
+      detalle: cart.map((item) => ({
+        pedidoId: orderId,
+        fecha,
+        item: item.id,
         productoId: item.id,
         producto: item.name,
-        presentacion: item.presentation || "",
+        presentacion: item.presentation || "Única",
         cantidad: item.qty,
-        precioUnitario: unitPrice,
-        subtotalLinea: unitPrice * item.qty,
-      };
-    }),
+        precioUnitario: item.salePrice || item.price,
+        subtotalLinea: (item.salePrice || item.price) * item.qty,
+      })),
+    };
+    return data;
+  }; // <--- Aquí faltaba esta llave en tu archivo
+
+  const enviarPedidoASheets = async (datosPedido) => {
+    try {
+      await fetch(SHEETS_CONFIG.scriptUrl, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(datosPedido),
+      });
+      return true;
+    } catch (error) {
+      console.error("Error de conexión:", error);
+      throw error;
+    }
   };
-};
-
-/*const submitOrderToSheets = async (payload) => {
-  const response = await fetch(SHEETS_CONFIG.scriptUrl, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(payload),
-  });*/
-
-const enviarPedidoASheets = async (datosPedido) => {
-  console.log("Enviando a:", SHEETS_CONFIG.scriptUrl);
-  try {
-    await fetch(SHEETS_CONFIG.scriptUrl, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(datosPedido),
-    });
-    // Como es no-cors, no podemos leer la respuesta, pero si llegamos aquí, se envió
-    return true;
-  } catch (error) {
-    console.error("Error real capturado:", error);
-    throw error;
-  }
-};
-  /*try {
-    // No guardamos el resultado en una constante porque será opaco
-    await fetch(SHEETS_CONFIG.scriptUrl, {
-      method: "POST",
-      mode: "no-cors", 
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(datosPedido),
-    });
-    // Si llegamos aquí, el navegador "lanzó" el paquete con éxito
-    return true; 
-  } catch (error) {
-    console.error("Error de conexión:", error);
-    throw error; // Solo falla si no hay red
-  }
-};*/
-
-  if (!response.ok) throw new Error(`Order API ${response.status}`);
-
-  const contentType = response.headers.get("content-type") || "";
-  if (!contentType.includes("application/json")) {
-    throw new Error("El registro del pedido no confirmó JSON");
-  }
-
-  const data = await response.json();
-  if (data?.ok === false || data?.success === false) {
-    throw new Error(data?.error || "No se pudo registrar el pedido");
-  }
-
-  return data;
-};
 
 const TRUST = [
   { icon: Leaf,   title:"Productos Naturales",  sub:"Alta calidad"  },
