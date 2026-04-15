@@ -262,7 +262,7 @@ const SHEETS_CONFIG = {
   deploymentId: "AKfycbzLmc1aW6_EYcQLW8EcABdU-M3xGe1Iw3EiYkXULLqf2r0RF9W4eCY3QGTf_aXJhcho",
   catalogPage: "Catalogo",
   clientePage: "Cliente",
-  detallePage: "Detallepedido",
+  detallePage: "DetallePedido",
   ordersAction: "createOrder",
 };
 
