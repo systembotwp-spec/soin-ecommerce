@@ -1069,7 +1069,7 @@ const handleCheckout = useCallback(async () => {
                 <p className="hero-sub">Alimentos · Accesorios · Salud · Higiene · Y mucho amor</p>
                 <button className="hero-cta tap" onClick={() => goTo("catalogo")}
                   aria-label="Ir al catálogo de productos">
-                  ¡Compra para los que amas! <ChevronRight size={15} aria-hidden="true" />
+                  ¡Compra Ahora! <ChevronRight size={15} aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -1085,7 +1085,7 @@ const handleCheckout = useCallback(async () => {
             </p>
             <button className="hero-cta tap" onClick={() => goTo("catalogo")}
               aria-label="Ir al catálogo de productos">
-              ¡Compra para los que amas! <ChevronRight size={15} aria-hidden="true" />
+              ¡Compra Ahora! <ChevronRight size={15} aria-hidden="true" />
             </button>
           </div>
 
