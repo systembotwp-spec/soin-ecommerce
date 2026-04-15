@@ -317,7 +317,7 @@ const createOrderId = () => {
       })),
     };
     return data;
-  }; // <--- Aquí faltaba esta llave en tu archivo
+  }; 
 
   const enviarPedidoASheets = async (datosPedido) => {
     try {
