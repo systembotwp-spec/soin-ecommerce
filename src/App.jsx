@@ -59,6 +59,17 @@ const uniqueSorted = (items) =>
     a.localeCompare(b, "es", { sensitivity: "base" })
   );
 
+const isActiveStatus = (value) =>
+  ["activo", "inactivo", "agotado"].includes(normalize(value));
+
+const looksLikeImageUrl = (value) =>
+  /^https?:\/\//i.test((value || "").toString());
+
+const isFeaturedProduct = (product) => {
+  const value = normalize(product.tag3);
+  return Boolean(value) && !["no", "false", "0", "inactivo", "agotado"].includes(value);
+};
+
 const normalizePrices = (unitPrice, offerPrice) => {
   if (offerPrice == null || offerPrice === unitPrice) {
     return { price: unitPrice, salePrice: null };
@@ -100,16 +111,21 @@ const getProductVariants = (p) =>
    CATÁLOGO ESTANDARIZADO
    Columnas Google Sheets (A→N):
      id | nombre | descripcion | categoria | subcategoria |
-     presentacion | etiqueta1 | etiqueta2 | precioVenta |
+     presentacion | etiqueta1 | etiqueta2 | etiqueta3 | precioVenta |
      precioOferta | estado | imagen1 | imagen2 | imagen3
 ════════════════════════════════════════════════════════ */
 export const rowToProduct = (row) => {
+  const hasTag3Column = row.length > 14 || isActiveStatus(row[11]) || !looksLikeImageUrl(row[11]);
   const presentation = row[5] || "Única";
+  const priceIndex = hasTag3Column ? 9 : 8;
+  const salePriceIndex = hasTag3Column ? 10 : 9;
+  const statusIndex = hasTag3Column ? 11 : 10;
+  const imageStartIndex = hasTag3Column ? 12 : 11;
   const { price, salePrice } = normalizePrices(
-    toMoneyNumber(row[8]) ?? 0,
-    toMoneyNumber(row[9])
+    toMoneyNumber(row[priceIndex]) ?? 0,
+    toMoneyNumber(row[salePriceIndex])
   );
-  const images = [row[11], row[12], row[13]].filter(Boolean);
+  const images = [row[imageStartIndex], row[imageStartIndex + 1], row[imageStartIndex + 2]].filter(Boolean);
 
   return {
     id:          row[0],
@@ -120,9 +136,10 @@ export const rowToProduct = (row) => {
     presentation,
     tag1:        row[6] || null,
     tag2:        row[7] || null,
+    tag3:        hasTag3Column ? row[8] || null : null,
     price,
     salePrice,
-    status:      normalize(row[10] || "activo"),
+    status:      normalize(row[statusIndex] || "activo"),
     img:         images[0] || "",
     images,
     variants: [{
@@ -157,6 +174,7 @@ export const rowsToProducts = (rows) => {
     current.img = current.img || product.img;
     current.tag1 = current.tag1 || product.tag1;
     current.tag2 = current.tag2 || product.tag2;
+    current.tag3 = current.tag3 || product.tag3;
   });
 
   return Array.from(grouped.values());
@@ -180,6 +198,7 @@ const objectToRow = (item) => {
     value("presentacion", "presentación", "presentation"),
     value("etiqueta1", "tag1"),
     value("etiqueta2", "tag2"),
+    value("etiqueta3", "tag3", "destacado", "featured"),
     value("precioVenta", "precio venta", "precioUnitario", "precio unitario", "precio", "price"),
     value("precioOferta", "precio oferta", "salePrice"),
     value("estado", "status"),
@@ -241,13 +260,83 @@ const PRODUCTS = [
 const SHEETS_CONFIG = {
   scriptUrl: "https://script.google.com/macros/s/AKfycbzLmc1aW6_EYcQLW8EcABdU-M3xGe1Iw3EiYkXULLqf2r0RF9W4eCY3QGTf_aXJhcho/exec",
   deploymentId: "AKfycbzLmc1aW6_EYcQLW8EcABdU-M3xGe1Iw3EiYkXULLqf2r0RF9W4eCY3QGTf_aXJhcho",
-  sheetName: "Catalogo",
+  catalogPage: "Catalogo",
+  clientePage: "Cliente",
+  detallePage: "Detallepedido",
+  ordersAction: "createOrder",
 };
 
 const SHIPPING = {
   "Zona Sur":       15000,
   "Zona Norte":     25000,
   "Resto del País": null,
+};
+
+const PAYMENT_METHODS = [
+  "Transferencia bancaria",
+  "Efectivo",
+  "Wompi",
+  "T. crédito o débito",
+];
+
+const createOrderId = () => {
+  const stamp = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
+  const random = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `SOIN-${stamp}-${random}`;
+};
+
+const buildOrderPayload = ({ orderId, customer, cart, shippingZone, shipCost, subtotal, grandTotal }) => {
+  const createdAt = new Date().toISOString();
+
+  return {
+    action: SHEETS_CONFIG.ordersAction,
+    sheets: {
+      cliente: SHEETS_CONFIG.clientePage,
+      detalle: SHEETS_CONFIG.detallePage,
+    },
+    cliente: {
+      pedidoId: orderId,
+      fecha: createdAt,
+      nombreCompleto: customer.fullName.trim(),
+      celular: customer.phone.trim(),
+      direccionEntrega: customer.address.trim(),
+      zonaEnvio: shippingZone,
+      tipoPago: customer.paymentMethod,
+      subtotal,
+      envio: SHIPPING[shippingZone] === null ? "" : shipCost,
+      total: grandTotal,
+      estado: "nuevo",
+    },
+    detalle: cart.map((item, index) => {
+      const unitPrice = item.salePrice ?? item.price;
+      return {
+        pedidoId: orderId,
+        fecha: createdAt,
+        item: index + 1,
+        productoId: item.id,
+        producto: item.name,
+        presentacion: item.presentation || "",
+        cantidad: item.qty,
+        precioUnitario: unitPrice,
+        subtotalLinea: unitPrice * item.qty,
+      };
+    }),
+  };
+};
+
+const submitOrderToSheets = async (payload) => {
+  // Apps Script requiere mode:"no-cors" desde el navegador para evitar
+  // el rechazo CORS del preflight. La respuesta será "opaque" (no legible),
+  // pero el script en el servidor sí se ejecuta y escribe en Sheets.
+  // Para confirmar el éxito se confía en que el script no lance excepción;
+  // si la URL es inaccesible, fetch lanzará un NetworkError que capturamos arriba.
+  await fetch(SHEETS_CONFIG.scriptUrl, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload),
+  });
+  // Con no-cors no podemos leer la respuesta; asumimos éxito si no hubo error de red.
 };
 
 const TRUST = [
@@ -448,6 +537,16 @@ const injectStyles = () => (
     .catalog-msg { margin-top:10px; font-family:var(--f-body); font-size:var(--t-small); color:${C.textMuted}; }
 
     .featured-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; max-width:1100px; margin:0 auto 40px; }
+    .featured-scroll {
+      display:flex; gap:16px; max-width:1100px; margin:0 auto 40px;
+      overflow-x:auto; scroll-snap-type:x mandatory; padding:4px 2px 14px;
+      scrollbar-width:thin; scrollbar-color:${C.greenLight} transparent;
+    }
+    .featured-scroll::-webkit-scrollbar { height:8px; }
+    .featured-scroll::-webkit-scrollbar-thumb { background:${C.greenLight}; border-radius:50px; }
+    .featured-scroll .pcard {
+      min-width:240px; max-width:240px; flex:0 0 240px; scroll-snap-align:start;
+    }
     .products-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:20px; max-width:1100px; margin:0 auto; }
 
     /* ── SEARCH & FILTERS ── */
@@ -580,6 +679,21 @@ const injectStyles = () => (
     .ship-opt:hover { border-color:${C.greenLight}; }
     .ship-opt.chosen { border-color:${C.greenMid}; background:${C.greenMist}; font-weight:var(--w-semi); color:${C.greenDark}; }
     .ship-price { font-family:var(--f-display); font-size:var(--t-meta); font-weight:600; color:${C.greenMid}; }
+    .checkout-form { margin-top:24px; padding-top:18px; border-top:1px solid ${C.border}; }
+    .checkout-form-grid { display:flex; flex-direction:column; gap:10px; }
+    .checkout-field { display:flex; flex-direction:column; gap:5px; }
+    .checkout-label {
+      font-family:var(--f-body); font-size:var(--t-label); font-weight:var(--w-semi);
+      letter-spacing:var(--ls-label); text-transform:uppercase; color:${C.greenDark};
+    }
+    .checkout-input {
+      width:100%; padding:11px 12px; border-radius:8px; border:1.5px solid ${C.border};
+      background:#fff; color:${C.text}; font-family:var(--f-body); font-size:var(--t-meta);
+      outline:none; transition:border-color .2s, box-shadow .2s;
+    }
+    .checkout-input:focus { border-color:${C.greenMid}; box-shadow:0 0 0 3px rgba(74,122,90,.12); }
+    .checkout-input::placeholder { color:${C.textMuted}; }
+    .checkout-help { margin-top:9px; font-family:var(--f-body); font-size:11px; color:${C.textMuted}; line-height:1.5; }
 
     .drawer-foot { padding:18px 24px; border-top:1px solid ${C.border}; background:${C.greenMist}; }
     .totals { display:flex; flex-direction:column; gap:7px; margin-bottom:16px; }
@@ -650,6 +764,8 @@ const injectStyles = () => (
       .trust-item:nth-last-child(-n+2) { border-bottom:none; }
 
       .featured-grid      { grid-template-columns:1fr 1fr; gap:10px; }
+      .featured-scroll    { gap:10px; margin-bottom:28px; padding-bottom:12px; }
+      .featured-scroll .pcard { min-width:172px; max-width:172px; flex-basis:172px; }
       .products-grid      { grid-template-columns:1fr 1fr; gap:10px; }
       .filters-grid       { grid-template-columns:1fr; gap:9px; margin-bottom:22px; }
       .footer-grid        { grid-template-columns:1fr; gap:24px; }
@@ -686,7 +802,6 @@ export default function App() {
     products: sheetsProducts,
     loading: catalogLoading,
     error: catalogError,
-    warnings: catalogWarnings,
   } = useSheetsCatalog(SHEETS_CONFIG);
   const sheetsEnabled = Boolean(SHEETS_CONFIG.scriptUrl);
   const catalogProducts = sheetsProducts.length ? sheetsProducts : PRODUCTS;
@@ -698,8 +813,19 @@ export default function App() {
   const [filterSubcat, setFilterSubcat] = useState("");
   const [search, setSearch]         = useState("");
   const [shippingZone, setShipping] = useState("");
+  const [customer, setCustomer] = useState({
+    fullName: "",
+    phone: "",
+    address: "",
+    paymentMethod: "",
+  });
+  const [orderSaving, setOrderSaving] = useState(false);
   const { toasts, push: toast }     = useToast();
   const [shaking, shake]            = useCartShake();
+
+  const updateCustomer = useCallback((field, value) => {
+    setCustomer((prev) => ({ ...prev, [field]: value }));
+  }, []);
 
   /* carrito */
   const addToCart = useCallback((p) => {
@@ -742,6 +868,12 @@ export default function App() {
     pets: uniqueSorted(catalogProducts.map((p) => p.tag2)),
   }), [catalogProducts, filterCat]);
 
+  const featuredProducts = useMemo(() =>
+    catalogProducts
+      .filter((p) => p.status === "activo" && isFeaturedProduct(p))
+      .slice(0, 10),
+  [catalogProducts]);
+
   useEffect(() => {
     if (filterSubcat && !filterOptions.subcategories.includes(filterSubcat)) {
       setFilterSubcat("");
@@ -760,6 +892,7 @@ export default function App() {
         p.subcategory,
         p.tag1,
         p.tag2,
+        p.tag3,
         ...getProductVariants(p).map((v) => v.presentation),
       ].map(normalize).join(" ").includes(q);
       const petLabel = normalize(p.tag2);
@@ -775,7 +908,9 @@ export default function App() {
   [catalogProducts, search, filterPet, filterCat, filterSubcat]);
 
   /* checkout — encodeURIComponent en texto dinámico */
-  const handleCheckout = useCallback(() => {
+  const handleCheckout = useCallback(async () => {
+    if (orderSaving) return;
+
     if (cart.length === 0) {
       toast("Agrega productos antes de finalizar");
       return;
@@ -783,6 +918,39 @@ export default function App() {
 
     if (!shippingZone) {
       toast("Elige una zona de envío para continuar");
+      return;
+    }
+
+    const missingCustomerField = [
+      ["fullName", "nombre completo"],
+      ["phone", "número de celular"],
+      ["address", "dirección de entrega"],
+      ["paymentMethod", "tipo de pago"],
+    ].find(([field]) => !customer[field].trim());
+
+    if (missingCustomerField) {
+      toast(`Completa ${missingCustomerField[1]} para continuar`);
+      return;
+    }
+
+    const orderId = createOrderId();
+    const orderPayload = buildOrderPayload({
+      orderId,
+      customer,
+      cart,
+      shippingZone,
+      shipCost,
+      subtotal,
+      grandTotal,
+    });
+
+    setOrderSaving(true);
+
+    try {
+      await submitOrderToSheets(orderPayload);
+    } catch (error) {
+      toast("No pudimos registrar el pedido. Intenta de nuevo.");
+      setOrderSaving(false);
       return;
     }
 
@@ -796,8 +964,15 @@ export default function App() {
     const body = [
       "¡Hola SOIN! 🐾",
       "Quiero hacer un pedido:",
+      `Pedido: ${orderId}`,
       "",
       lines,
+      "",
+      "Datos del comprador:",
+      `Nombre: ${customer.fullName.trim()}`,
+      `Celular: ${customer.phone.trim()}`,
+      `Dirección: ${customer.address.trim()}`,
+      `Pago: ${customer.paymentMethod}`,
       "",
       `Subtotal: ${fmt(subtotal)}`,
       `Zona: ${shippingZone}`,
@@ -805,7 +980,10 @@ export default function App() {
       `*TOTAL: ${fmt(grandTotal)}*`,
     ].join("\n");
     window.open(`https://wa.me/573158429286?text=${encodeURIComponent(body)}`, "_blank");
-  }, [cart, shippingZone, subtotal, shipCost, grandTotal, toast]);
+    toast("Pedido registrado. Te llevamos a WhatsApp.");
+    setCart([]);
+    setOrderSaving(false);
+  }, [cart, customer, orderSaving, shippingZone, subtotal, shipCost, grandTotal, toast]);
 
   useEffect(() => {
     if (!drawerOpen) return;
@@ -901,25 +1079,27 @@ export default function App() {
           </div>
 
           {/* Destacados */}
-          <section className="section" aria-labelledby="dest-h">
-            <div className="section-header">
-              <span className="eyebrow">Selección especial</span>
-              <h2 className="section-title" id="dest-h">Productos <em>Destacados</em></h2>
-            </div>
-            <div className="featured-grid">
-              {catalogProducts.filter(p => p.status==="activo").slice(0,4).map((p,i) => (
-                <ProductCard key={p.id} p={p} onAdd={addToCart} delay={i*60} />
-              ))}
-            </div>
-            <div style={{textAlign:"center",marginTop:16}}>
-              <button className="hero-cta tap"
-                style={{background:C.gold,color:C.greenDark}}
-                onClick={() => goTo("catalogo")}
-                aria-label="Ver catálogo completo">
-                Ver todo el catálogo <ChevronRight size={15} aria-hidden="true" />
-              </button>
-            </div>
-          </section>
+          {featuredProducts.length > 0 && (
+            <section className="section" aria-labelledby="dest-h">
+              <div className="section-header">
+                <span className="eyebrow">Selección especial</span>
+                <h2 className="section-title" id="dest-h">Productos <em>Destacados</em></h2>
+              </div>
+              <div className="featured-scroll" role="list" aria-label="Productos destacados">
+                {featuredProducts.map((p,i) => (
+                  <ProductCard key={p.id} p={p} onAdd={addToCart} delay={i*60} />
+                ))}
+              </div>
+              <div style={{textAlign:"center",marginTop:16}}>
+                <button className="hero-cta tap"
+                  style={{background:C.gold,color:C.greenDark}}
+                  onClick={() => goTo("catalogo")}
+                  aria-label="Ver catálogo completo">
+                  Ver todo el catálogo <ChevronRight size={15} aria-hidden="true" />
+                </button>
+              </div>
+            </section>
+          )}
         </>
       )}
 
@@ -931,9 +1111,6 @@ export default function App() {
             <h2 className="section-title" id="cat-h">Todos los <em>Productos</em></h2>
             {sheetsEnabled && catalogLoading && <p className="catalog-msg">Actualizando catálogo...</p>}
             {sheetsEnabled && catalogError && <p className="catalog-msg">No pudimos cargar Sheets. Mostrando catálogo local.</p>}
-            {sheetsEnabled && !catalogError && catalogWarnings.length > 0 && (
-              <p className="catalog-msg">Algunas filas del catálogo no tienen la información completa.</p>
-            )}
           </div>
 
           <div className="search-wrap" role="search">
@@ -1107,6 +1284,62 @@ export default function App() {
                       </button>
                     ))}
                   </div>
+
+                  <div className="checkout-form">
+                    <p className="ship-label">Datos de entrega</p>
+                    <div className="checkout-form-grid">
+                      <label className="checkout-field">
+                        <span className="checkout-label">Nombre completo</span>
+                        <input
+                          className="checkout-input"
+                          type="text"
+                          value={customer.fullName}
+                          onChange={(event) => updateCustomer("fullName", event.target.value)}
+                          placeholder="Ej. Ana María Pérez"
+                          autoComplete="name"
+                        />
+                      </label>
+
+                      <label className="checkout-field">
+                        <span className="checkout-label">Celular</span>
+                        <input
+                          className="checkout-input"
+                          type="tel"
+                          value={customer.phone}
+                          onChange={(event) => updateCustomer("phone", event.target.value)}
+                          placeholder="Ej. 300 123 4567"
+                          autoComplete="tel"
+                        />
+                      </label>
+
+                      <label className="checkout-field">
+                        <span className="checkout-label">Dirección de entrega</span>
+                        <input
+                          className="checkout-input"
+                          type="text"
+                          value={customer.address}
+                          onChange={(event) => updateCustomer("address", event.target.value)}
+                          placeholder="Dirección, barrio y referencias"
+                          autoComplete="street-address"
+                        />
+                      </label>
+
+                      <label className="checkout-field">
+                        <span className="checkout-label">Tipo de pago</span>
+                        <select
+                          className="checkout-input"
+                          value={customer.paymentMethod}
+                          onChange={(event) => updateCustomer("paymentMethod", event.target.value)}
+                        >
+                          <option value="">Selecciona una opción</option>
+                          {PAYMENT_METHODS.map((method) => (
+                            <option key={method} value={method}>{method}</option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    <p className="checkout-help">Estos datos se enviarán por WhatsApp junto con tu pedido.</p>
+                  </div>
                 </>
               )}
             </div>
@@ -1133,14 +1366,18 @@ export default function App() {
                   </div>
                 </div>
                 <button
-                  className={`checkout-btn tap ${shippingZone?"ready":"blocked"}`}
-                  onClick={shippingZone ? handleCheckout : undefined}
-                  disabled={!shippingZone}
+                  className={`checkout-btn tap ${shippingZone && !orderSaving?"ready":"blocked"}`}
+                  onClick={shippingZone && !orderSaving ? handleCheckout : undefined}
+                  disabled={!shippingZone || orderSaving}
                   aria-label={shippingZone
                     ? "Finalizar pedido por WhatsApp"
                     : "Selecciona una zona de envío para continuar"}>
                   <MessageCircle size={18} aria-hidden="true" />
-                  {shippingZone ? "Finalizar por WhatsApp" : "Elige zona de envío"}
+                  {orderSaving
+                    ? "Registrando pedido..."
+                    : shippingZone
+                      ? "Finalizar por WhatsApp"
+                      : "Elige zona de envío"}
                 </button>
               </div>
             )}
@@ -1255,8 +1492,8 @@ function ProductCard({ p, onAdd, delay = 0 }) {
         <div className="pcard-footer">
           <div className="pcard-prices">
             <p className={`pcard-price${hasDiscount?" sale":""}`}
-              aria-label={`Precio: ${fmt(displayPrice)} COP`}>
-              {fmt(displayPrice)}<sub> COP</sub>
+              aria-label={`Precio: ${fmt(displayPrice)}`}>
+              {fmt(displayPrice)}
             </p>
             {hasDiscount && (
               <span className="pcard-price-orig"
@@ -1288,12 +1525,13 @@ function ProductCard({ p, onAdd, delay = 0 }) {
    F  presentacion
    G  etiqueta1
    H  etiqueta2
-   I  precioVenta
-   J  precioOferta
-   K  estado
-   L  imagen1
-   M  imagen2
-   N  imagen3
+   I  etiqueta3
+   J  precioVenta
+   K  precioOferta
+   L  estado
+   M  imagen1
+   N  imagen2
+   O  imagen3
 
    Para manejar varias presentaciones, repite el mismo id en varias filas
    y cambia presentacion/precios. La app las agrupa en una sola tarjeta.
@@ -1323,7 +1561,7 @@ export function useSheetsCatalog(config = {}) {
     setWarnings([]);
 
     const url = new URL(config.scriptUrl);
-    if (config.sheetName) url.searchParams.set("sheet", config.sheetName);
+    if (config.catalogPage) url.searchParams.set("page", config.catalogPage);
 
     fetch(url.toString(), { signal: controller.signal })
       .then((r) => {
@@ -1360,7 +1598,7 @@ export function useSheetsCatalog(config = {}) {
       });
 
     return () => controller.abort();
-  }, [config.scriptUrl, config.sheetName]);
+  }, [config.scriptUrl, config.catalogPage]);
 
   return { products, loading, error, warnings };
 }
