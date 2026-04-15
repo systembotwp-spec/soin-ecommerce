@@ -324,12 +324,29 @@ const buildOrderPayload = ({ orderId, customer, cart, shippingZone, shipCost, su
   };
 };
 
-const submitOrderToSheets = async (payload) => {
+/*const submitOrderToSheets = async (payload) => {
   const response = await fetch(SHEETS_CONFIG.scriptUrl, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify(payload),
-  });
+  });*/
+
+const enviarPedidoASheets = async (datosPedido) => {
+  try {
+    // No guardamos el resultado en una constante porque será opaco
+    await fetch(SHEETS_CONFIG.scriptUrl, {
+      method: "POST",
+      mode: "no-cors", 
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(datosPedido),
+    });
+    // Si llegamos aquí, el navegador "lanzó" el paquete con éxito
+    return true; 
+  } catch (error) {
+    console.error("Error de conexión:", error);
+    throw error; // Solo falla si no hay red
+  }
+};
 
   if (!response.ok) throw new Error(`Order API ${response.status}`);
 
@@ -954,7 +971,7 @@ export default function App() {
     setOrderSaving(true);
 
     try {
-      await submitOrderToSheets(orderPayload);
+      await /*submitOrderToSheets*/enviarPedidoASheets(orderPayload);
     } catch (error) {
       toast("No pudimos registrar el pedido. Intenta de nuevo.");
       setOrderSaving(false);
