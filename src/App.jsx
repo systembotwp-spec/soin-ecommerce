@@ -95,7 +95,7 @@ const getProductVariants = (p) =>
    CATÁLOGO ESTANDARIZADO
    Columnas Google Sheets (A→N):
      id | nombre | descripcion | categoria | subcategoria |
-     presentacion | etiqueta1 | etiqueta2 | precioUnitario |
+     presentacion | etiqueta1 | etiqueta2 | precioVenta |
      precioOferta | estado | imagen1 | imagen2 | imagen3
 ════════════════════════════════════════════════════════ */
 export const rowToProduct = (row) => {
@@ -175,7 +175,7 @@ const objectToRow = (item) => {
     value("presentacion", "presentación", "presentation"),
     value("etiqueta1", "tag1"),
     value("etiqueta2", "tag2"),
-    value("precioUnitario", "precio unitario", "precio", "price"),
+    value("precioVenta", "precio venta", "precioUnitario", "precio unitario", "precio", "price"),
     value("precioOferta", "precio oferta", "salePrice"),
     value("estado", "status"),
     value("imagen1", "img", "image", "image1"),
@@ -344,7 +344,7 @@ const injectStyles = () => (
       border-bottom:1px solid ${C.border};
       padding:0 5%; display:flex; align-items:center; justify-content:space-between; height:64px;
     }
-    .nav-logo { height:38px; cursor:pointer; transition:opacity .2s; }
+    .nav-logo { height:46px; cursor:pointer; transition:opacity .2s; }
     .nav-logo:hover { opacity:.75; }
     .nav-links { display:flex; gap:28px; align-items:center; }
     .nav-link {
@@ -610,23 +610,23 @@ const injectStyles = () => (
 
     /* ── RESPONSIVE ── */
     @media(max-width:640px){
-      .hero               { min-height:360px; overflow:hidden; }
-      .hero-img           { height:360px; max-height:none; min-height:0; object-fit:cover; object-position:center top; display:block; }
+      .hero               { min-height:0; overflow:hidden; background:#dfeadf; }
+      .hero-img           { height:auto; max-height:none; min-height:0; object-fit:contain; object-position:center top; display:block; }
       .hero-overlay       {
         display:flex; align-items:center; justify-content:flex-start;
-        padding:0 5%;
-        background:linear-gradient(90deg,rgba(45,74,53,.74) 0%,rgba(45,74,53,.46) 42%,rgba(45,74,53,.08) 72%,transparent 100%);
+        padding:0 4%;
+        background:linear-gradient(90deg,rgba(45,74,53,.68) 0%,rgba(45,74,53,.42) 34%,rgba(45,74,53,.08) 55%,transparent 76%);
       }
-      .hero-content       { max-width:min(56%,260px); padding-top:8px; }
-      .hero-title         { font-size:clamp(22px,6vw,30px); line-height:1.08; margin-bottom:8px; }
-      .hero-sub           { font-size:11px; line-height:1.45; margin-bottom:14px; max-width:220px; }
-      .hero-eyebrow       { font-size:9px; padding:4px 10px; margin-bottom:8px; }
-      .hero-cta           { font-size:10px; padding:9px 13px; gap:5px; max-width:100%; }
+      .hero-content       { max-width:48%; padding-top:4px; }
+      .hero-title         { font-size:clamp(18px,5vw,27px); line-height:1.05; margin-bottom:7px; }
+      .hero-sub           { font-size:10px; line-height:1.35; margin-bottom:11px; max-width:175px; }
+      .hero-eyebrow       { font-size:8px; padding:3px 8px; margin-bottom:7px; }
+      .hero-cta           { font-size:9px; padding:8px 10px; gap:4px; max-width:100%; line-height:1.2; }
       .hero-text-mobile   { display:none; }
 
       .nav-links .nav-link:not(.cart-trigger) { display:none; }
       .nav { height:56px; }
-      .nav-logo { height:30px; }
+      .nav-logo { height:38px; }
 
       .trust              { display:grid; grid-template-columns:1fr 1fr; }
       .trust-item         { min-width:0; padding:13px 10px; border-right:none; max-width:100%; border-bottom:1px solid rgba(255,255,255,.08); }
@@ -649,12 +649,11 @@ const injectStyles = () => (
     }
 
     @media(max-width:380px){
-      .hero               { min-height:330px; }
-      .hero-img           { height:330px; }
-      .hero-content       { max-width:58%; }
-      .hero-title         { font-size:clamp(20px,5.6vw,25px); }
-      .hero-sub           { font-size:10px; margin-bottom:12px; }
-      .hero-cta           { font-size:9px; padding:8px 11px; }
+      .hero-content       { max-width:46%; }
+      .hero-title         { font-size:clamp(16px,4.9vw,22px); }
+      .hero-sub           { font-size:9px; margin-bottom:9px; max-width:150px; }
+      .hero-eyebrow       { font-size:7px; padding:3px 7px; }
+      .hero-cta           { font-size:8px; padding:7px 8px; }
     }
 
     .tap { cursor:pointer; user-select:none; }
@@ -830,7 +829,6 @@ export default function App() {
               alt="SOIN — Todo lo que tu mascota necesita en un solo lugar" />
             <div className="hero-overlay" aria-hidden="true">
               <div className="hero-content">
-                <div className="hero-eyebrow">🌿 Colección 2025</div>
                 <h1 className="hero-title">
                   Todo lo que tu<br />mascota <em>necesita,</em><br />en un solo lugar.
                 </h1>
@@ -845,7 +843,6 @@ export default function App() {
 
           {/* Hero móvil — texto debajo, alineado izquierda */}
           <div className="hero-text-mobile">
-            <div className="hero-eyebrow" style={{marginBottom:12}}>🌿 Colección 2025</div>
             <h1 className="hero-title">
               Todo lo que tu mascota <em>necesita,</em> en un solo lugar.
             </h1>
@@ -1230,7 +1227,7 @@ function ProductCard({ p, onAdd, delay = 0 }) {
    F  presentacion
    G  etiqueta1
    H  etiqueta2
-   I  precioUnitario
+   I  precioVenta
    J  precioOferta
    K  estado
    L  imagen1
