@@ -66,7 +66,7 @@ const normalizePrices = (unitPrice, offerPrice) => {
 };
 
 const normalize = (value = "") =>
-  value
+  (value ?? "")
     .toString()
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
@@ -491,8 +491,8 @@ const injectStyles = () => (
       scrollbar-width:none; overscroll-behavior-x:contain;
     }
     .pcard-img-scroll::-webkit-scrollbar { display:none; }
-    .pcard-img { width:100%; height:190px; object-fit:cover; display:block; flex:0 0 100%; scroll-snap-align:start; transition:transform .5s; }
-    .pcard:hover .pcard-img { transform:scale(1.04); }
+    .pcard-img { width:100%; height:190px; object-fit:contain; object-position:center; display:block; flex:0 0 100%; scroll-snap-align:start; transition:transform .5s; background:${C.greenMist}; }
+    .pcard:hover .pcard-img { transform:scale(1.02); }
     .pcard-img-hint {
       position:absolute; right:10px; bottom:10px;
       background:rgba(45,74,53,.82); color:#fff; border-radius:50px;
@@ -610,11 +610,19 @@ const injectStyles = () => (
 
     /* ── RESPONSIVE ── */
     @media(max-width:640px){
-      .hero               { overflow:visible; }
-      .hero-img           { max-height:none; min-height:0; height:auto; object-fit:cover; object-position:center top; display:block; }
-      .hero-overlay       { display:none; }
-      .hero-text-mobile   { display:block; }
-      .hero-text-mobile .hero-title { font-size:clamp(24px,7vw,32px); }
+      .hero               { min-height:360px; overflow:hidden; }
+      .hero-img           { height:360px; max-height:none; min-height:0; object-fit:cover; object-position:center top; display:block; }
+      .hero-overlay       {
+        display:flex; align-items:center; justify-content:flex-start;
+        padding:0 5%;
+        background:linear-gradient(90deg,rgba(45,74,53,.74) 0%,rgba(45,74,53,.46) 42%,rgba(45,74,53,.08) 72%,transparent 100%);
+      }
+      .hero-content       { max-width:min(56%,260px); padding-top:8px; }
+      .hero-title         { font-size:clamp(22px,6vw,30px); line-height:1.08; margin-bottom:8px; }
+      .hero-sub           { font-size:11px; line-height:1.45; margin-bottom:14px; max-width:220px; }
+      .hero-eyebrow       { font-size:9px; padding:4px 10px; margin-bottom:8px; }
+      .hero-cta           { font-size:10px; padding:9px 13px; gap:5px; max-width:100%; }
+      .hero-text-mobile   { display:none; }
 
       .nav-links .nav-link:not(.cart-trigger) { display:none; }
       .nav { height:56px; }
@@ -629,7 +637,7 @@ const injectStyles = () => (
       .products-grid      { grid-template-columns:1fr 1fr; gap:10px; }
       .footer-grid        { grid-template-columns:1fr; gap:24px; }
 
-      .pcard-img          { height:130px; }
+      .pcard-img          { height:130px; object-fit:contain; }
       .pcard-name         { font-size:15px; }
       .pcard-desc         { display:none; }
       .pcard-body         { padding:10px 11px 12px; }
@@ -638,6 +646,15 @@ const injectStyles = () => (
       .section-header     { margin-bottom:28px; }
       .drawer             { width:100%; }
       .footer             { padding:36px 5% 24px; }
+    }
+
+    @media(max-width:380px){
+      .hero               { min-height:330px; }
+      .hero-img           { height:330px; }
+      .hero-content       { max-width:58%; }
+      .hero-title         { font-size:clamp(20px,5.6vw,25px); }
+      .hero-sub           { font-size:10px; margin-bottom:12px; }
+      .hero-cta           { font-size:9px; padding:8px 11px; }
     }
 
     .tap { cursor:pointer; user-select:none; }
@@ -712,8 +729,18 @@ export default function App() {
         p.tag2,
         ...getProductVariants(p).map((v) => v.presentation),
       ].map(normalize).join(" ").includes(q);
-      const matchP = filterPet === "Todos" || p.subcategory === filterPet || p.subcategory === "Todos";
-      const matchC = filterCat === "Todos" || p.category === filterCat;
+      const petLabel = normalize(p.tag2);
+      const subcategoryLabel = normalize(p.subcategory);
+      const filterPetLabel = normalize(filterPet);
+      const matchP =
+        filterPet === "Todos" ||
+        petLabel === filterPetLabel ||
+        petLabel.includes(filterPetLabel) ||
+        petLabel === "todos" ||
+        subcategoryLabel === filterPetLabel ||
+        subcategoryLabel.includes(filterPetLabel) ||
+        subcategoryLabel === "todos";
+      const matchC = filterCat === "Todos" || normalize(p.category) === normalize(filterCat);
       return matchS && matchP && matchC;
     }),
   [catalogProducts, search, filterPet, filterCat]);
