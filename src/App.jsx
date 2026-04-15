@@ -970,8 +970,9 @@ export default function App() {
 
     setOrderSaving(true);
 
+    /*Aca estaba esta funcion --submitOrderToSheets*/
     try {
-      await /*submitOrderToSheets*/enviarPedidoASheets(orderPayload);
+      await enviarPedidoASheets(orderPayload);
     } catch (error) {
       toast("No pudimos registrar el pedido. Intenta de nuevo.");
       setOrderSaving(false);
