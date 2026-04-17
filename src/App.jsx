@@ -1,8 +1,10 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import {
   ShoppingCart, X, Plus, Minus, Search,
   MessageCircle, Trash2, Truck, ChevronRight,
-  Leaf, Heart, Shield, Zap, PackageSearch
+  Leaf, Heart, Shield, Zap, PackageSearch,
+  MapPin, Mail, Phone, Facebook, Instagram,
+  FileText, RefreshCw, Lock
 } from "lucide-react";
 
 /* ════════════════════════════════════════════════════════
@@ -94,6 +96,30 @@ const normalizeKey = (value = "") =>
 
 const FALLBACK_IMG =
   "https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=500&auto=format&fit=crop";
+
+/* ════════════════════════════════════════════════════════
+   CACHE — stale-while-revalidate para el catálogo
+   Se guarda en localStorage bajo CACHE_KEY.
+   TTL: 30 minutos. Al cargar, se sirve la caché inmediatamente
+   y se actualiza en background desde Google Sheets.
+════════════════════════════════════════════════════════ */
+const CACHE_KEY   = "soin_catalog_v1";
+const CACHE_TTL   = 30 * 60 * 1000; // 30 min en ms
+
+const readCache = () => {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const { products, ts } = JSON.parse(raw);
+    if (!Array.isArray(products) || !products.length) return null;
+    return { products, stale: Date.now() - ts > CACHE_TTL };
+  } catch { return null; }
+};
+
+const writeCache = (products) => {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ products, ts: Date.now() })); }
+  catch {}
+};
 
 const getProductVariants = (p) =>
   p.variants?.length
@@ -531,16 +557,31 @@ const injectStyles = () => (
     .catalog-msg { margin-top:10px; font-family:var(--f-body); font-size:var(--t-small); color:${C.textMuted}; }
 
     .featured-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; max-width:1100px; margin:0 auto 40px; }
+    .featured-scroll-wrap { max-width:1100px; margin:0 auto 16px; position:relative; }
     .featured-scroll {
-      display:flex; gap:16px; max-width:1100px; margin:0 auto 40px;
+      display:flex; gap:16px;
       overflow-x:auto; scroll-snap-type:x mandatory; padding:4px 2px 14px;
-      scrollbar-width:thin; scrollbar-color:${C.greenLight} transparent;
+      scrollbar-width:none; overscroll-behavior-x:contain;
+      -webkit-overflow-scrolling:touch;
     }
-    .featured-scroll::-webkit-scrollbar { height:8px; }
-    .featured-scroll::-webkit-scrollbar-thumb { background:${C.greenLight}; border-radius:50px; }
+    .featured-scroll::-webkit-scrollbar { display:none; }
     .featured-scroll .pcard {
       min-width:240px; max-width:240px; flex:0 0 240px; scroll-snap-align:start;
     }
+    /* ── DOTS indicadores de scroll ── */
+    .featured-dots {
+      display:flex; justify-content:center; gap:10px;
+      margin-top:4px; margin-bottom:24px;
+    }
+    .featured-dot-btn {
+      width:10px; height:10px; border-radius:50%; border:none; cursor:pointer;
+      background:${C.greenPale}; padding:0;
+      transition:background .25s, transform .25s;
+    }
+    .featured-dot-btn.active {
+      background:${C.greenMid}; transform:scale(1.35);
+    }
+    .featured-dot-btn:hover { background:${C.greenLight}; }
     .products-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:20px; max-width:1100px; margin:0 auto; }
 
     /* ── SEARCH & FILTERS ── */
@@ -756,16 +797,45 @@ const injectStyles = () => (
 
     /* ── FOOTER ── */
     .footer { background:${C.greenDark}; padding:52px 5% 28px; }
-    .footer-grid { display:grid; grid-template-columns:1.8fr 1fr 1fr; gap:40px; max-width:1100px; margin:0 auto 40px; }
+    .footer-grid {
+      display:grid; grid-template-columns:1.8fr 1fr 1fr 1fr;
+      gap:36px; max-width:1100px; margin:0 auto 40px;
+    }
     .footer-logo { height:38px; filter:brightness(0) invert(1); margin-bottom:14px; display:block; }
-    .footer-tagline { font-family:var(--f-body); font-size:var(--t-meta); font-weight:var(--w-light); line-height:1.8; max-width:280px; color:rgba(255,255,255,.5); }
+    .footer-tagline { font-family:var(--f-body); font-size:var(--t-meta); font-weight:var(--w-light); line-height:1.8; max-width:280px; color:rgba(255,255,255,.5); margin-bottom:18px; }
+    .footer-social { display:flex; gap:10px; margin-top:4px; }
+    .footer-social-btn {
+      width:36px; height:36px; border-radius:50%; border:1.5px solid rgba(255,255,255,.18);
+      display:flex; align-items:center; justify-content:center;
+      color:rgba(255,255,255,.55); text-decoration:none;
+      transition:background .2s, border-color .2s, color .2s;
+    }
+    .footer-social-btn:hover { background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.4); color:#fff; }
     .footer-col h4 { font-family:var(--f-body); font-size:var(--t-small); font-weight:var(--w-semi); letter-spacing:var(--ls-label); text-transform:uppercase; color:${C.greenPale}; margin-bottom:16px; }
     .footer-col ul { list-style:none; }
     .footer-col ul li { margin-bottom:9px; }
-    .footer-col ul li a { font-family:var(--f-body); font-size:var(--t-meta); font-weight:var(--w-light); color:rgba(255,255,255,.4); text-decoration:none; transition:color .2s; }
+    .footer-col ul li a,.footer-col ul li span {
+      font-family:var(--f-body); font-size:var(--t-meta); font-weight:var(--w-light);
+      color:rgba(255,255,255,.4); text-decoration:none; transition:color .2s;
+      display:flex; align-items:flex-start; gap:7px; line-height:1.5;
+    }
     .footer-col ul li a:hover { color:${C.greenPale}; }
+    .footer-col ul li svg { flex-shrink:0; margin-top:2px; opacity:.6; }
     .footer-strip { text-align:center; font-family:var(--f-body); font-size:var(--t-small); font-weight:var(--w-reg); letter-spacing:.03em; color:${C.goldLight}; padding:13px; background:rgba(255,255,255,.05); border-radius:8px; max-width:1100px; margin:0 auto 32px; }
-    .footer-bottom { border-top:1px solid rgba(255,255,255,.08); padding-top:22px; display:flex; justify-content:space-between; font-family:var(--f-body); font-size:var(--t-small); font-weight:var(--w-reg); color:rgba(255,255,255,.25); max-width:1100px; margin:0 auto; }
+    .footer-bottom { border-top:1px solid rgba(255,255,255,.08); padding-top:22px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; font-family:var(--f-body); font-size:var(--t-small); font-weight:var(--w-reg); color:rgba(255,255,255,.25); max-width:1100px; margin:0 auto; }
+
+    /* ── POLÍTICAS (vista inline) ── */
+    .policy-section { background:${C.warmWhite}; padding:60px 5%; max-width:860px; margin:0 auto; }
+    .policy-section h2 { font-family:var(--f-display); font-size:clamp(22px,2.5vw,32px); color:${C.greenDark}; margin-bottom:8px; }
+    .policy-section h3 { font-family:var(--f-display); font-size:18px; color:${C.greenMid}; margin:28px 0 8px; }
+    .policy-section p,.policy-section li {
+      font-family:var(--f-body); font-size:var(--t-meta); color:${C.textMuted}; line-height:1.8;
+    }
+    .policy-section ul { padding-left:20px; margin-bottom:12px; }
+    .policy-section ul li { margin-bottom:6px; }
+    .policy-back { display:inline-flex; align-items:center; gap:6px; margin-bottom:28px; font-family:var(--f-body); font-size:var(--t-meta); font-weight:var(--w-semi); color:${C.greenMid}; border:none; background:none; cursor:pointer; padding:0; transition:color .2s; }
+    .policy-back:hover { color:${C.greenDark}; }
+    .policy-divider { height:1px; background:${C.border}; margin:36px 0; }
 
     /* ── RESPONSIVE ── */
     @media(max-width:640px){
@@ -793,11 +863,11 @@ const injectStyles = () => (
       .trust-item:nth-last-child(-n+2) { border-bottom:none; }
 
       .featured-grid      { grid-template-columns:1fr 1fr; gap:10px; }
-      .featured-scroll    { gap:10px; margin-bottom:28px; padding-bottom:12px; }
+      .featured-scroll    { gap:10px; }
       .featured-scroll .pcard { min-width:172px; max-width:172px; flex-basis:172px; }
       .products-grid      { grid-template-columns:1fr 1fr; gap:10px; }
       .filters-grid       { grid-template-columns:1fr; gap:9px; margin-bottom:22px; }
-      .footer-grid        { grid-template-columns:1fr; gap:24px; }
+      .footer-grid        { grid-template-columns:1fr 1fr; gap:20px; }
 
       .pcard-img          { height:130px; object-fit:contain; }
       .pcard-name         { font-size:15px; }
@@ -831,12 +901,14 @@ export default function App() {
     products: sheetsProducts,
     loading: catalogLoading,
     error: catalogError,
+    fromCache: catalogFromCache,
   } = useSheetsCatalog(SHEETS_CONFIG);
   const sheetsEnabled = Boolean(SHEETS_CONFIG.scriptUrl);
   const catalogProducts = sheetsProducts.length ? sheetsProducts : PRODUCTS;
   const [cart, setCart]             = usePersistedCart();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [view, setView]             = useState("inicio");
+  const [policyView, setPolicyView] = useState(null); // "envios" | "devoluciones" | "datos"
   const [filterPet, setFilterPet]   = useState("");
   const [filterCat, setFilterCat]   = useState("");
   const [filterSubcat, setFilterSubcat] = useState("");
@@ -1012,7 +1084,7 @@ const handleCheckout = useCallback(async () => {
     };
   }, [drawerOpen]);
 
-  const goTo = (v) => { setView(v); setDrawerOpen(false); window.scrollTo({ top:0, behavior:"smooth" }); };
+  const goTo = (v) => { setView(v); setPolicyView(null); setDrawerOpen(false); window.scrollTo({ top:0, behavior:"smooth" }); };
   const resetFilters = () => { setSearch(""); setFilterPet(""); setFilterCat(""); setFilterSubcat(""); };
   
   return (
@@ -1094,12 +1166,8 @@ const handleCheckout = useCallback(async () => {
                 <span className="eyebrow">Selección especial</span>
                 <h2 className="section-title" id="dest-h">Productos <em>Destacados</em></h2>
               </div>
-              <div className="featured-scroll" role="list" aria-label="Productos destacados">
-                {featuredProducts.map((p,i) => (
-                  <ProductCard key={p.id} p={p} onAdd={addToCart} delay={i*60} />
-                ))}
-              </div>
-              <div style={{textAlign:"center",marginTop:16}}>
+              <FeaturedScroll products={featuredProducts} onAdd={addToCart} />
+              <div style={{textAlign:"center",marginTop:8}}>
                 <button className="hero-cta tap"
                   style={{background:C.gold,color:C.greenDark}}
                   onClick={() => goTo("catalogo")}
@@ -1118,8 +1186,9 @@ const handleCheckout = useCallback(async () => {
           <div className="section-header">
             <span className="eyebrow">Catálogo SOIN</span>
             <h2 className="section-title" id="cat-h">Todos los <em>Productos</em></h2>
-            {sheetsEnabled && catalogLoading && <p className="catalog-msg">Actualizando catálogo...</p>}
-            {sheetsEnabled && catalogError && <p className="catalog-msg">No pudimos cargar Sheets. Mostrando catálogo local.</p>}
+            {sheetsEnabled && catalogLoading && !catalogFromCache && <p className="catalog-msg">Cargando catálogo...</p>}
+            {sheetsEnabled && catalogLoading && catalogFromCache  && <p className="catalog-msg">Actualizando catálogo en segundo plano…</p>}
+            {sheetsEnabled && catalogError && <p className="catalog-msg">No pudimos sincronizar con Sheets. Mostrando catálogo guardado.</p>}
           </div>
 
           <div className="search-wrap" role="search">
@@ -1194,25 +1263,156 @@ const handleCheckout = useCallback(async () => {
         </section>
       )}
 
+      {/* ══ POLÍTICAS ══ */}
+      {policyView && (
+        <div className="policy-section">
+          <button className="policy-back tap" onClick={() => { setPolicyView(null); window.scrollTo({top:0,behavior:"smooth"}); }}>
+            <ChevronRight size={14} style={{transform:"rotate(180deg)"}} /> Volver
+          </button>
+
+          {policyView === "envios" && (
+            <>
+              <h2>Política de Envío</h2>
+              <p>SOIN Pets se compromete a enviar los productos de manera eficiente, segura y transparente. Antes de despachar cualquier pedido verificamos la orden, la disponibilidad del producto, la dirección de entrega y el correcto pago.</p>
+              <h3>Tiempos de entrega</h3>
+              <ul>
+                <li><strong>La Estrella, Itagüí, Sabaneta, Envigado:</strong> 24 horas.</li>
+                <li><strong>Medellín y Bello:</strong> 48 horas.</li>
+                <li><strong>Caldas, Copacabana, Girardota y Barbosa:</strong> 1 a 2 días hábiles.</li>
+                <li><strong>Demás ciudades de Colombia:</strong> 2 a 5 días hábiles. Se envía número de guía para rastreo.</li>
+              </ul>
+              <h3>Costos de envío</h3>
+              <p>Los costos se calculan y muestran al momento de finalizar la compra según la zona seleccionada.</p>
+            </>
+          )}
+
+          {policyView === "devoluciones" && (
+            <>
+              <h2>Política de Cambios, Devoluciones y Garantías</h2>
+              <p>Para solicitar un cambio o devolución el producto debe estar en las mismas condiciones en que fue recibido, en su embalaje original, con mínimo el 90% de su contenido y presentando el recibo de compra original.</p>
+              <h3>Procedimiento</h3>
+              <p>Contáctanos por WhatsApp al <strong>312 7325195</strong>. Verificamos la solicitud, emitimos un número de autorización y revisamos el producto al recibirlo.</p>
+              <h3>Tiempos de procesamiento</h3>
+              <ul>
+                <li><strong>Devolución de dinero:</strong> 24 horas.</li>
+                <li><strong>Cambio de producto:</strong> 1 a 2 días hábiles (puede variar según disponibilidad).</li>
+              </ul>
+              <h3>Garantía</h3>
+              <p>Garantizamos que los productos están libres de defectos de fabricación. En caso de defecto, reemplazamos el producto o devolvemos el dinero. La garantía no cubre daños por uso indebido, falta de mantenimiento o manipulación por parte del cliente.</p>
+            </>
+          )}
+
+          {policyView === "datos" && (
+            <>
+              <h2>Política de Protección de Datos Personales</h2>
+              <p>SOIN Pets asume toda la responsabilidad del tratamiento de los datos personales de clientes, proveedores, empleados y terceros. Los datos recibidos se usan únicamente con fines comerciales, promocionales e informativos.</p>
+              <h3>Finalidad del tratamiento</h3>
+              <ul>
+                <li>Recibir, preparar y enviar pedidos.</li>
+                <li>Mejorar el servicio al cliente.</li>
+                <li>Informar sobre promociones y productos.</li>
+                <li>Cumplir obligaciones legales y contractuales.</li>
+              </ul>
+              <h3>Derechos de los titulares</h3>
+              <p>Puedes conocer, actualizar, rectificar o solicitar la cancelación de tus datos escribiéndonos por WhatsApp o al correo soinpets@gmail.com. La cancelación se hace efectiva dentro de 3 días hábiles.</p>
+            </>
+          )}
+        </div>
+      )}
+
       {/* FOOTER */}
       <footer className="footer">
         <div className="footer-strip">♡ Cuidamos a quienes llenan tu vida de amor, alegría y compañía. ♡</div>
         <div className="footer-grid">
+          {/* Columna 1 — Marca + redes */}
           <div>
             <img className="footer-logo" src="/Logo.png" alt="SOIN" />
             <p className="footer-tagline">Todo lo que tu mascota necesita, en un solo lugar. Productos naturales con respaldo veterinario para perros y gatos de Colombia.</p>
+            <div className="footer-social">
+              <a className="footer-social-btn"
+                href="https://www.facebook.com/profile.php?id=61572112329789"
+                target="_blank" rel="noreferrer" aria-label="Facebook de SOIN Pets">
+                <Facebook size={16} />
+              </a>
+              <a className="footer-social-btn"
+                href="https://www.instagram.com/soin.pets/"
+                target="_blank" rel="noreferrer" aria-label="Instagram de SOIN Pets">
+                <Instagram size={16} />
+              </a>
+              <a className="footer-social-btn"
+                href="https://wa.me/573125071461"
+                target="_blank" rel="noreferrer" aria-label="WhatsApp de SOIN Pets">
+                <MessageCircle size={16} />
+              </a>
+            </div>
           </div>
+
+          {/* Columna 2 — Tienda */}
           <div className="footer-col">
             <h4>Tienda</h4>
-            <ul>{["Perros","Gatos","Alimentos Nutritivos","Accesorios","Salud y Bienestar"].map(l=><li key={l}><a href="#">{l}</a></li>)}</ul>
+            <ul>
+              {["Perros","Gatos","Alimentos Nutritivos","Accesorios","Salud y Bienestar"].map(l => (
+                <li key={l}><a href="#" onClick={(e)=>{e.preventDefault();goTo("catalogo");}}>{l}</a></li>
+              ))}
+            </ul>
           </div>
+
+          {/* Columna 3 — Políticas */}
           <div className="footer-col">
-            <h4>Soporte</h4>
-            <ul>{["Centro de ayuda","Política de envíos","Devoluciones","WhatsApp","Contacto"].map(l=><li key={l}><a href="#">{l}</a></li>)}</ul>
+            <h4>Políticas</h4>
+            <ul>
+              <li>
+                <a href="#" onClick={(e)=>{e.preventDefault();setPolicyView("envios");window.scrollTo({top:0,behavior:"smooth"});}}>
+                  <Truck size={12} /> Política de envíos
+                </a>
+              </li>
+              <li>
+                <a href="#" onClick={(e)=>{e.preventDefault();setPolicyView("devoluciones");window.scrollTo({top:0,behavior:"smooth"});}}>
+                  <RefreshCw size={12} /> Cambios y devoluciones
+                </a>
+              </li>
+              <li>
+                <a href="#" onClick={(e)=>{e.preventDefault();setPolicyView("datos");window.scrollTo({top:0,behavior:"smooth"});}}>
+                  <Lock size={12} /> Protección de datos
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Columna 4 — Contacto */}
+          <div className="footer-col">
+            <h4>Contacto</h4>
+            <ul>
+              <li>
+                <span>
+                  <MapPin size={12} />
+                  Envigado, Antioquia, Colombia
+                </span>
+              </li>
+              <li>
+                <a href="tel:+573125071461">
+                  <Phone size={12} />
+                  312 507 1461
+                </a>
+              </li>
+              <li>
+                <a href="mailto:soinpets@gmail.com">
+                  <Mail size={12} />
+                  soinpets@gmail.com
+                </a>
+              </li>
+              <li>
+                <a href="https://wa.me/573125071461" target="_blank" rel="noreferrer">
+                  <MessageCircle size={12} />
+                  WhatsApp
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
+
         <div className="footer-bottom">
-          <span>© 2025 SOIN Medellín — Todos los derechos reservados.</span>
+          <span>© 2025 SOIN Pets, Envigado — Todos los derechos reservados.</span>
           <span>Hecho con 🤍 en Colombia</span>
         </div>
       </footer>
@@ -1433,6 +1633,78 @@ const handleCheckout = useCallback(async () => {
 }
 
 /* ════════════════════════════════════════════════════════
+   FEATURED SCROLL — carrusel con 3 círculos indicadores
+   Los dots muestran cuántas "páginas" hay (máx visible = 3)
+   y se activan con IntersectionObserver conforme el usuario
+   hace scroll, sin necesidad de estado manual.
+════════════════════════════════════════════════════════ */
+function FeaturedScroll({ products, onAdd }) {
+  const scrollRef  = useRef(null);
+  const [activeDot, setActiveDot] = useState(0);
+
+  // Número de dots: mínimo 1, máximo 3, o igual al número de productos si < 3
+  const dotCount = Math.min(3, products.length);
+
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container || products.length <= 1) return;
+
+    // Observamos cada card directamente
+    const cards = Array.from(container.querySelectorAll(".pcard"));
+    if (!cards.length) return;
+
+    const cardWidth = cards[0].offsetWidth + 16; // 16 = gap
+    const containerWidth = container.offsetWidth;
+
+    const handleScroll = () => {
+      const scrollLeft = container.scrollLeft;
+      const maxScroll  = container.scrollWidth - containerWidth;
+      // Progreso 0-1
+      const progress = maxScroll > 0 ? scrollLeft / maxScroll : 0;
+      // Mapear a índice de dot (0 a dotCount-1)
+      setActiveDot(Math.round(progress * (dotCount - 1)));
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [products.length, dotCount]);
+
+  const scrollTo = (dotIndex) => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const maxScroll = container.scrollWidth - container.offsetWidth;
+    const targetScroll = dotCount > 1
+      ? (dotIndex / (dotCount - 1)) * maxScroll
+      : 0;
+    container.scrollTo({ left: targetScroll, behavior: "smooth" });
+  };
+
+  return (
+    <div className="featured-scroll-wrap">
+      <div className="featured-scroll" ref={scrollRef} role="list" aria-label="Productos destacados">
+        {products.map((p, i) => (
+          <ProductCard key={p.id} p={p} onAdd={onAdd} delay={i * 60} />
+        ))}
+      </div>
+      {dotCount > 1 && (
+        <div className="featured-dots" aria-label="Indicador de posición" role="tablist">
+          {Array.from({ length: dotCount }).map((_, i) => (
+            <button
+              key={i}
+              className={`featured-dot-btn${activeDot === i ? " active" : ""}`}
+              onClick={() => scrollTo(i)}
+              aria-label={`Ir a la sección ${i + 1}`}
+              role="tab"
+              aria-selected={activeDot === i}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════
    PRODUCT CARD
 ════════════════════════════════════════════════════════ */
 function ProductCard({ p, onAdd, delay = 0 }) {
@@ -1546,92 +1818,89 @@ function ProductCard({ p, onAdd, delay = 0 }) {
 }
 
 /* ════════════════════════════════════════════════════════
-   GOOGLE SHEETS CONNECTOR
+   GOOGLE SHEETS CONNECTOR  —  stale-while-revalidate
    ────────────────────────────────────────────────────────
-   Estructura de la hoja "Catalogo" (fila 1 = encabezados):
-
-   A  id
-   B  nombre
-   C  descripcion
-   D  categoria
-   E  subcategoria
-   F  presentacion
-   G  etiqueta1
-   H  etiqueta2
-   I  etiqueta3
-   J  precioVenta
-   K  precioOferta
-   L  estado
-   M  imagen1
-   N  imagen2
-   O  imagen3
-
-   Para manejar varias presentaciones, repite el mismo id en varias filas
-   y cambia presentacion/precios. La app las agrupa en una sola tarjeta.
-
-   Estados válidos : "activo" | "inactivo" | "agotado"
-   precioOferta    : dejar vacío si no hay descuento
-
-   Cómo activar:
-     1. Publicar Apps Script como Web App.
-     2. Ejecutar como: tu usuario.
-     3. Acceso: cualquier persona.
-     4. Pegar la URL /exec en SHEETS_CONFIG.scriptUrl.
-        Mientras falle o venga vacío, la app usa PRODUCTS como respaldo local.
+   1. Al montar: sirve caché de localStorage inmediatamente
+      (sin spinner si hay datos guardados).
+   2. En background: consulta Sheets. Si hay datos nuevos,
+      actualiza estado y reescribe caché.
+   3. Si Sheets falla y no hay caché → usa PRODUCTS local.
 ════════════════════════════════════════════════════════ */
 export function useSheetsCatalog(config = {}) {
-  const [products, setProducts] = useState([]);
-  const [loading,  setLoading]  = useState(true);
+  // Inicializa con la caché si existe, para evitar flash de contenido
+  const [products, setProducts] = useState(() => {
+    if (!config.scriptUrl) return [];
+    const cached = readCache();
+    return cached ? cached.products : [];
+  });
+  const [loading,  setLoading]  = useState(() => {
+    if (!config.scriptUrl) return false;
+    const cached = readCache();
+    // Solo mostramos spinner si no hay caché para mostrar
+    return !cached || cached.stale;
+  });
   const [error,    setError]    = useState(null);
   const [warnings, setWarnings] = useState([]);
+  const [fromCache, setFromCache] = useState(() => {
+    const cached = readCache();
+    return Boolean(cached && !cached.stale);
+  });
 
   useEffect(() => {
     if (!config.scriptUrl) { setLoading(false); return; }
 
     const controller = new AbortController();
-    setLoading(true);
-    setError(null);
-    setWarnings([]);
 
-    const url = new URL(config.scriptUrl);
-    if (config.catalogPage) url.searchParams.set("page", config.catalogPage);
+    const doFetch = () => {
+      const url = new URL(config.scriptUrl);
+      if (config.catalogPage) url.searchParams.set("page", config.catalogPage);
 
-    fetch(url.toString(), { signal: controller.signal })
-      .then((r) => {
-        if (!r.ok) throw new Error(`Catalog API ${r.status}`);
-        const contentType = r.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) {
-          throw new Error("El Apps Script debe responder JSON y estar publicado para acceso público");
-        }
-        return r.json();
-      })
-      .then((data) => {
-        const rows = payloadToRows(data);
-        const nextProducts = rowsToProducts(rows);
-        const validVariantCount = nextProducts.reduce(
-          (total, product) => total + getProductVariants(product).length,
-          0
-        );
-        const invalidRows = Math.max(0, rows.length - validVariantCount);
+      fetch(url.toString(), { signal: controller.signal })
+        .then((r) => {
+          if (!r.ok) throw new Error(`Catalog API ${r.status}`);
+          const ct = r.headers.get("content-type") || "";
+          if (!ct.includes("application/json"))
+            throw new Error("El Apps Script debe responder JSON");
+          return r.json();
+        })
+        .then((data) => {
+          const rows = payloadToRows(data);
+          const nextProducts = rowsToProducts(rows);
+          if (!rows.length) throw new Error("El catálogo no devolvió filas");
+          if (!nextProducts.length) throw new Error("No hay productos activos");
 
-        if (!rows.length) throw new Error("El catálogo no devolvió filas");
-        if (!nextProducts.length) throw new Error("El catálogo no tiene productos activos válidos");
-
-        setWarnings(invalidRows > 0 ? [`${invalidRows} filas incompletas o inactivas`] : []);
-        setProducts(nextProducts);
-      })
-      .catch((e) => {
-        if (e.name !== "AbortError") {
-          setProducts([]);
+          const validVariantCount = nextProducts.reduce(
+            (t, p) => t + getProductVariants(p).length, 0
+          );
+          const invalidRows = Math.max(0, rows.length - validVariantCount);
+          setWarnings(invalidRows > 0 ? [`${invalidRows} filas incompletas`] : []);
+          setProducts(nextProducts);
+          writeCache(nextProducts);
+          setFromCache(false);
+        })
+        .catch((e) => {
+          if (e.name === "AbortError") return;
+          // Si hay datos de caché (aunque stale), los mantenemos y solo anotamos el error
           setError(e.message);
-        }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
+          // Si no hay nada en estado aún, quedamos con array vacío (App usará PRODUCTS)
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
+    };
+
+    // Si la caché existe pero está stale, buscar en background sin bloquear UI
+    const cached = readCache();
+    if (cached && !cached.stale) {
+      // Caché fresca: igual revalidamos en background pero sin mostrar loading
+      setLoading(false);
+      setTimeout(doFetch, 0);
+    } else {
+      doFetch();
+    }
 
     return () => controller.abort();
   }, [config.scriptUrl, config.catalogPage]);
 
-  return { products, loading, error, warnings };
+  return { products, loading, error, warnings, fromCache };
 }
