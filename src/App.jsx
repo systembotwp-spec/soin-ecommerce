@@ -1619,7 +1619,7 @@ const handleCheckout = useCallback(async () => {
 
 
       {/* WhatsApp flotante */}
-      <a className="wa-btn tap" href="https://wa.me/573158429286"
+      <a className="wa-btn tap" href="https://wa.me/573125071461"
         target="_blank" rel="noreferrer" aria-label="Contactar a SOIN por WhatsApp">
         <MessageCircle size={28} aria-hidden="true" />
       </a>
