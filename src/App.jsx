@@ -4,7 +4,7 @@ import {
   MessageCircle, Trash2, Truck, ChevronRight,
   Leaf, Heart, Shield, Zap, PackageSearch,
   MapPin, Mail, Phone, Facebook, Instagram,
-  FileText, RefreshCw, Lock
+  FileText, RefreshCw, Lock, Eye, ChevronLeft
 } from "lucide-react";
 
 /* ════════════════════════════════════════════════════════
@@ -658,8 +658,15 @@ const injectStyles = () => (
     .pcard-badge.gold-b { background:${C.gold}; color:${C.greenDark}; }
     .pcard-body { padding:13px 15px 15px; flex:1; display:flex; flex-direction:column; justify-content:space-between; }
     .pcard-cat  { font-family:var(--f-body); font-size:var(--t-label); font-weight:var(--w-semi); letter-spacing:var(--ls-label); text-transform:uppercase; color:${C.greenMid}; margin-bottom:5px; }
-    .pcard-name { font-family:var(--f-display); font-size:var(--t-card); font-weight:var(--w-reg); line-height:1.25; color:${C.greenDark}; margin-bottom:5px; }
-    .pcard-desc { font-family:var(--f-body); font-size:11px; font-weight:var(--w-reg); color:${C.textMuted}; line-height:1.55; margin-bottom:12px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .pcard-name { font-family:var(--f-display); font-size:var(--t-card); font-weight:var(--w-reg); line-height:1.25; color:${C.greenDark}; margin-bottom:10px; }
+    .pcard-detail-btn {
+      display:inline-flex; align-items:center; gap:5px; margin-bottom:12px;
+      background:none; border:none; padding:0; cursor:pointer;
+      font-family:var(--f-body); font-size:10px; font-weight:var(--w-semi);
+      letter-spacing:.06em; text-transform:uppercase; color:${C.greenMid};
+      transition:color .2s;
+    }
+    .pcard-detail-btn:hover { color:${C.greenDark}; }
     .pcard-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; }
     .pcard-prices { display:flex; flex-direction:column; }
     .pcard-price { font-family:var(--f-display); font-size:var(--t-price-lg); font-weight:600; color:${C.greenDark}; line-height:1; }
@@ -680,6 +687,111 @@ const injectStyles = () => (
     }
     .add-btn { background:${C.greenDark}; color:#fff; border:none; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .2s, transform .15s; flex-shrink:0; }
     .add-btn:hover { background:${C.greenMid}; transform:scale(1.1); }
+
+    /* ── PRODUCT DETAIL MODAL ── */
+    .pdmodal-overlay {
+      position:fixed; inset:0; z-index:1100;
+      background:rgba(0,0,0,.55); backdrop-filter:blur(6px);
+      display:flex; align-items:flex-end; justify-content:center;
+      animation:fadeIn .22s ease;
+    }
+    @media(min-width:600px){
+      .pdmodal-overlay { align-items:center; }
+    }
+    .pdmodal {
+      background:${C.warmWhite}; width:min(520px,100%);
+      border-radius:24px 24px 0 0; overflow:hidden;
+      display:flex; flex-direction:column;
+      max-height:92vh;
+      animation:slideUp .32s cubic-bezier(.16,1,.3,1);
+    }
+    @media(min-width:600px){
+      .pdmodal { border-radius:20px; max-height:88vh; }
+    }
+    @keyframes slideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+    @media(min-width:600px){
+      @keyframes slideUp { from{transform:translateY(32px);opacity:0} to{transform:translateY(0);opacity:1} }
+    }
+
+    .pdmodal-gallery {
+      position:relative; background:${C.greenMist}; flex-shrink:0;
+    }
+    .pdmodal-imgs {
+      display:flex; overflow-x:auto; scroll-snap-type:x mandatory;
+      scrollbar-width:none; overscroll-behavior-x:contain;
+    }
+    .pdmodal-imgs::-webkit-scrollbar { display:none; }
+    .pdmodal-img {
+      width:100%; min-width:100%; height:260px; object-fit:contain;
+      scroll-snap-align:start; flex:0 0 100%; background:${C.greenMist};
+    }
+    @media(min-width:600px){ .pdmodal-img { height:300px; } }
+    .pdmodal-close {
+      position:absolute; top:12px; right:12px;
+      width:34px; height:34px; border-radius:50%;
+      background:rgba(255,255,255,.9); border:none; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      color:${C.greenDark}; box-shadow:0 2px 8px rgba(0,0,0,.14);
+      transition:background .2s;
+    }
+    .pdmodal-close:hover { background:#fff; }
+    .pdmodal-gallery-nav {
+      position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
+      display:flex; gap:6px; padding:4px 8px; border-radius:50px;
+      background:rgba(45,74,53,.38); backdrop-filter:blur(4px);
+    }
+    .pdmodal-gallery-dot {
+      width:7px; height:7px; border-radius:50%; border:none; padding:0; cursor:pointer;
+      background:rgba(255,255,255,.5); transition:background .2s, transform .2s;
+    }
+    .pdmodal-gallery-dot.active { background:#fff; transform:scale(1.25); }
+
+    .pdmodal-body {
+      flex:1; overflow-y:auto; padding:22px 24px 28px;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .pdmodal-cat {
+      font-family:var(--f-body); font-size:var(--t-label); font-weight:var(--w-semi);
+      letter-spacing:var(--ls-label); text-transform:uppercase; color:${C.greenMid};
+    }
+    .pdmodal-name {
+      font-family:var(--f-display); font-size:clamp(20px,4vw,26px);
+      font-weight:var(--w-reg); color:${C.greenDark}; line-height:1.2;
+    }
+    .pdmodal-desc {
+      font-family:var(--f-body); font-size:var(--t-meta); color:${C.textMuted};
+      line-height:1.75;
+    }
+    .pdmodal-divider { height:1px; background:${C.border}; }
+    .pdmodal-prices {
+      display:flex; align-items:baseline; gap:10px;
+    }
+    .pdmodal-price {
+      font-family:var(--f-display); font-size:26px; font-weight:600; color:${C.greenDark};
+    }
+    .pdmodal-price.sale { color:${C.greenMid}; }
+    .pdmodal-price-orig {
+      font-family:var(--f-body); font-size:var(--t-meta); color:${C.textMuted};
+      text-decoration:line-through;
+    }
+    .pdmodal-variant-select {
+      width:100%; padding:10px 14px; border-radius:10px;
+      border:1.5px solid ${C.border}; background:#fff;
+      font-family:var(--f-body); font-size:var(--t-meta); font-weight:var(--w-semi);
+      color:${C.greenDark}; outline:none; cursor:pointer;
+      transition:border-color .2s, box-shadow .2s;
+    }
+    .pdmodal-variant-select:focus { border-color:${C.greenMid}; box-shadow:0 0 0 3px rgba(74,122,90,.12); }
+    .pdmodal-add-btn {
+      width:100%; padding:14px; border-radius:50px; border:none;
+      background:${C.greenDark}; color:#fff;
+      font-family:var(--f-body); font-size:var(--t-btn); font-weight:var(--w-bold);
+      letter-spacing:var(--ls-btn); text-transform:uppercase;
+      cursor:pointer; transition:background .2s, transform .15s;
+      display:flex; align-items:center; justify-content:center; gap:9px;
+      margin-top:4px;
+    }
+    .pdmodal-add-btn:hover { background:${C.greenMid}; transform:translateY(-1px); }
 
     /* ── DRAWER ── */
     .overlay { position:fixed; inset:0; background:rgba(0,0,0,.42); z-index:1000; backdrop-filter:blur(5px); animation:fadeIn .25s ease; }
@@ -871,7 +983,6 @@ const injectStyles = () => (
 
       .pcard-img          { height:130px; object-fit:contain; }
       .pcard-name         { font-size:15px; }
-      .pcard-desc         { display:none; }
       .pcard-body         { padding:10px 11px 12px; }
 
       .section            { padding:36px 4%; }
@@ -1705,21 +1816,191 @@ function FeaturedScroll({ products, onAdd }) {
 }
 
 /* ════════════════════════════════════════════════════════
+   PRODUCT DETAIL MODAL
+   Se abre al hacer click en "Ver detalles" de la tarjeta.
+   Muestra galería completa deslizable, título, descripción
+   completa, precio y botón directo para agregar al carrito.
+════════════════════════════════════════════════════════ */
+function ProductDetailModal({ p, onAdd, onClose }) {
+  const variants       = getProductVariants(p);
+  const [variantIndex, setVariantIndex] = useState(0);
+  const [imgIndex, setImgIndex]         = useState(0);
+  const galleryRef = useRef(null);
+
+  const selectedVariant = variants[variantIndex] || variants[0];
+  const displayPrice    = selectedVariant.salePrice ?? selectedVariant.price;
+  const hasDiscount     = selectedVariant.salePrice != null && selectedVariant.salePrice < selectedVariant.price;
+
+  const productImages = Array.from(new Set([
+    ...(selectedVariant.images || []),
+    selectedVariant.img,
+    ...(p.images || []),
+    p.img,
+  ].filter(Boolean))).slice(0, 5);
+  const imageList = productImages.length ? productImages : [FALLBACK_IMG];
+
+  /* Scroll galería → actualiza dot activo */
+  useEffect(() => {
+    const el = galleryRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const w = el.offsetWidth;
+      if (w) setImgIndex(Math.round(el.scrollLeft / w));
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  /* Ir a imagen por índice */
+  const goToImg = (i) => {
+    const el = galleryRef.current;
+    if (el) el.scrollTo({ left: el.offsetWidth * i, behavior: "smooth" });
+  };
+
+  /* Cerrar con Escape */
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  /* Bloquear scroll del body mientras el modal está abierto */
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  const handleAdd = () => {
+    const productImage = imageList[0];
+    onAdd({
+      ...p,
+      cartId: selectedVariant.id,
+      presentation: selectedVariant.presentation,
+      price: selectedVariant.price,
+      salePrice: selectedVariant.salePrice,
+      img: productImage,
+      variants: undefined,
+      images: undefined,
+    });
+    onClose();
+  };
+
+  return (
+    <div
+      className="pdmodal-overlay"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Detalle de ${p.name}`}
+    >
+      <div className="pdmodal">
+
+        {/* Galería */}
+        <div className="pdmodal-gallery">
+          <div className="pdmodal-imgs" ref={galleryRef}>
+            {imageList.map((src, i) => (
+              <img
+                key={`${src}-${i}`}
+                className="pdmodal-img"
+                src={src}
+                alt={i === 0 ? p.name : `${p.name} imagen ${i + 1}`}
+                loading={i === 0 ? "eager" : "lazy"}
+                onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }}
+              />
+            ))}
+          </div>
+
+          {/* Botón cerrar */}
+          <button className="pdmodal-close tap" onClick={onClose} aria-label="Cerrar detalle">
+            <X size={15} />
+          </button>
+
+          {/* Dots de galería */}
+          {imageList.length > 1 && (
+            <div className="pdmodal-gallery-nav" aria-label="Navegar imágenes">
+              {imageList.map((_, i) => (
+                <button
+                  key={i}
+                  className={`pdmodal-gallery-dot${imgIndex === i ? " active" : ""}`}
+                  onClick={() => goToImg(i)}
+                  aria-label={`Ver imagen ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Contenido */}
+        <div className="pdmodal-body">
+          <p className="pdmodal-cat">{p.category} · {p.subcategory}</p>
+          <h2 className="pdmodal-name">{p.name}</h2>
+          <p className="pdmodal-desc">{p.description}</p>
+
+          <div className="pdmodal-divider" />
+
+          {/* Variantes */}
+          {variants.length > 1 && (
+            <select
+              className="pdmodal-variant-select"
+              value={variantIndex}
+              onChange={(e) => setVariantIndex(Number(e.target.value))}
+              aria-label={`Elegir presentación de ${p.name}`}
+            >
+              {variants.map((v, i) => (
+                <option key={v.id} value={i}>
+                  {v.presentation} · {fmt(v.salePrice ?? v.price)}
+                </option>
+              ))}
+            </select>
+          )}
+          {variants.length === 1 && selectedVariant.presentation !== "Única" && (
+            <p style={{fontFamily:"var(--f-body)",fontSize:"var(--t-meta)",color:C.textMuted}}>
+              Presentación: <strong>{selectedVariant.presentation}</strong>
+            </p>
+          )}
+
+          {/* Precios */}
+          <div className="pdmodal-prices">
+            <span className={`pdmodal-price${hasDiscount ? " sale" : ""}`}>
+              {fmt(displayPrice)}
+            </span>
+            {hasDiscount && (
+              <span className="pdmodal-price-orig">{fmt(selectedVariant.price)}</span>
+            )}
+          </div>
+
+          {/* Agregar al carrito */}
+          <button className="pdmodal-add-btn tap" onClick={handleAdd}
+            aria-label={`Agregar ${p.name} al carrito`}>
+            <ShoppingCart size={16} aria-hidden="true" />
+            Agregar al carrito
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════
    PRODUCT CARD
 ════════════════════════════════════════════════════════ */
 function ProductCard({ p, onAdd, delay = 0 }) {
   const variants = getProductVariants(p);
   const [variantIndex, setVariantIndex] = useState(0);
+  const [showDetail, setShowDetail]     = useState(false);
+
   const selectedVariant = variants[variantIndex] || variants[0];
-  const displayPrice = selectedVariant.salePrice ?? selectedVariant.price;
-  const hasDiscount  = selectedVariant.salePrice != null && selectedVariant.salePrice < selectedVariant.price;
+  const displayPrice    = selectedVariant.salePrice ?? selectedVariant.price;
+  const hasDiscount     = selectedVariant.salePrice != null && selectedVariant.salePrice < selectedVariant.price;
+
   const productImages = Array.from(new Set([
     ...(selectedVariant.images || []),
     selectedVariant.img,
     ...(p.images || []),
     p.img,
   ].filter(Boolean))).slice(0, 3);
-  const imageList = productImages.length ? productImages : [FALLBACK_IMG];
+  const imageList    = productImages.length ? productImages : [FALLBACK_IMG];
   const productImage = imageList[0];
 
   const handleAdd = () => {
@@ -1736,84 +2017,104 @@ function ProductCard({ p, onAdd, delay = 0 }) {
   };
 
   return (
-    <article className="pcard" role="listitem"
-      style={{animationDelay:`${delay}ms`, animation:"fadeUp .45s ease both"}}>
+    <>
+      <article className="pcard" role="listitem"
+        style={{animationDelay:`${delay}ms`, animation:"fadeUp .45s ease both"}}>
 
-      <div className="pcard-img-wrap">
-        <div
-          className="pcard-img-scroll"
-          key={selectedVariant.id}
-          aria-label={`Imágenes de ${p.name}`}
-        >
-          {imageList.map((src, index) => (
-            <img
-              key={`${src}-${index}`}
-              className="pcard-img"
-              src={src}
-              alt={index === 0 ? p.name : `${p.name} imagen ${index + 1}`}
-              loading="lazy"
-              width="400"
-              height="190"
-              onError={(event) => { event.currentTarget.src = FALLBACK_IMG; }}
-            />
-          ))}
-        </div>
-        {imageList.length > 1 && (
-          <div className="pcard-dots" aria-hidden="true">
-            {imageList.map((src, index) => (
-              <span className="pcard-dot" key={`${src}-dot-${index}`} />
-            ))}
-          </div>
-        )}
-        {p.tag1 && (
-          <span className={`pcard-badge ${p.tag1==="Más vendido"?"gold-b":""}`}>
-            {p.tag1}
-          </span>
-        )}
-      </div>
-
-      <div className="pcard-body">
-        <div>
-          <p className="pcard-cat">{p.category} · {p.subcategory}</p>
-          <h3 className="pcard-name">{p.name}</h3>
-          <p className="pcard-desc">{p.description}</p>
-        </div>
-        {variants.length > 1 ? (
-          <select
-            className="variant-select"
-            value={variantIndex}
-            onChange={(event) => setVariantIndex(Number(event.target.value))}
-            aria-label={`Elegir presentación de ${p.name}`}
+        <div className="pcard-img-wrap">
+          <div
+            className="pcard-img-scroll"
+            key={selectedVariant.id}
+            aria-label={`Imágenes de ${p.name}`}
           >
-            {variants.map((variant, index) => (
-              <option key={variant.id} value={index}>
-                {variant.presentation} · {fmt(variant.salePrice ?? variant.price)}
-              </option>
+            {imageList.map((src, index) => (
+              <img
+                key={`${src}-${index}`}
+                className="pcard-img"
+                src={src}
+                alt={index === 0 ? p.name : `${p.name} imagen ${index + 1}`}
+                loading="lazy"
+                width="400"
+                height="190"
+                onError={(event) => { event.currentTarget.src = FALLBACK_IMG; }}
+              />
             ))}
-          </select>
-        ) : selectedVariant.presentation !== "Única" ? (
-          <p className="variant-note">{selectedVariant.presentation}</p>
-        ) : null}
-        <div className="pcard-footer">
-          <div className="pcard-prices">
-            <p className={`pcard-price${hasDiscount?" sale":""}`}
-              aria-label={`Precio: ${fmt(displayPrice)}`}>
-              {fmt(displayPrice)}
-            </p>
-            {hasDiscount && (
-              <span className="pcard-price-orig"
-                aria-label={`Precio original: ${fmt(selectedVariant.price)}`}>
-                {fmt(selectedVariant.price)}
-              </span>
-            )}
           </div>
-          <button className="add-btn tap" onClick={handleAdd}
-            aria-label={`Agregar ${p.name} ${selectedVariant.presentation} al carrito`}>
-            <Plus size={17} aria-hidden="true" />
-          </button>
+          {imageList.length > 1 && (
+            <div className="pcard-dots" aria-hidden="true">
+              {imageList.map((src, index) => (
+                <span className="pcard-dot" key={`${src}-dot-${index}`} />
+              ))}
+            </div>
+          )}
+          {p.tag1 && (
+            <span className={`pcard-badge ${p.tag1==="Más vendido"?"gold-b":""}`}>
+              {p.tag1}
+            </span>
+          )}
         </div>
-      </div>
-    </article>
+
+        <div className="pcard-body">
+          <div>
+            <p className="pcard-cat">{p.category} · {p.subcategory}</p>
+            <h3 className="pcard-name">{p.name}</h3>
+            {/* Botón Ver detalles — abre el modal */}
+            <button
+              className="pcard-detail-btn tap"
+              onClick={() => setShowDetail(true)}
+              aria-label={`Ver detalles de ${p.name}`}
+            >
+              <Eye size={11} aria-hidden="true" /> Ver detalles
+            </button>
+          </div>
+
+          {variants.length > 1 ? (
+            <select
+              className="variant-select"
+              value={variantIndex}
+              onChange={(event) => setVariantIndex(Number(event.target.value))}
+              aria-label={`Elegir presentación de ${p.name}`}
+            >
+              {variants.map((variant, index) => (
+                <option key={variant.id} value={index}>
+                  {variant.presentation} · {fmt(variant.salePrice ?? variant.price)}
+                </option>
+              ))}
+            </select>
+          ) : selectedVariant.presentation !== "Única" ? (
+            <p className="variant-note">{selectedVariant.presentation}</p>
+          ) : null}
+
+          <div className="pcard-footer">
+            <div className="pcard-prices">
+              <p className={`pcard-price${hasDiscount?" sale":""}`}
+                aria-label={`Precio: ${fmt(displayPrice)}`}>
+                {fmt(displayPrice)}
+              </p>
+              {hasDiscount && (
+                <span className="pcard-price-orig"
+                  aria-label={`Precio original: ${fmt(selectedVariant.price)}`}>
+                  {fmt(selectedVariant.price)}
+                </span>
+              )}
+            </div>
+            <button className="add-btn tap" onClick={handleAdd}
+              aria-label={`Agregar ${p.name} ${selectedVariant.presentation} al carrito`}>
+              <Plus size={17} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      </article>
+
+      {/* Modal de detalle del producto */}
+      {showDetail && (
+        <ProductDetailModal
+          p={p}
+          onAdd={onAdd}
+          onClose={() => setShowDetail(false)}
+        />
+      )}
+    </>
   );
 }
 
