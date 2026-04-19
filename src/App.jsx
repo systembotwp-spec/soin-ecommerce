@@ -1232,7 +1232,7 @@ const handleCheckout = useCallback(async () => {
                 <h1 className="hero-title">
                   Todo lo que tu<br />mascota <em>necesita,</em><br />en un solo lugar.
                 </h1>
-                <p className="hero-sub">Alimentos · Accesorios · Salud · Higiene · Y mucho amor</p>
+                <p className="hero-sub">Alimentos · Accesorios · Higiene · Y mucho amor</p>
                 <button className="hero-cta tap" onClick={() => goTo("catalogo")}
                   aria-label="Ir al catálogo de productos">
                   ¡Compra Ahora! <ChevronRight size={15} aria-hidden="true" />
@@ -1247,7 +1247,7 @@ const handleCheckout = useCallback(async () => {
               Todo lo que tu mascota <em>necesita,</em> en un solo lugar.
             </h1>
             <p className="hero-sub" style={{marginBottom:22}}>
-              Alimentos · Accesorios · Salud · Higiene · Y mucho amor
+              Alimentos · Accesorios · Higiene · Y mucho amor
             </p>
             <button className="hero-cta tap" onClick={() => goTo("catalogo")}
               aria-label="Ir al catálogo de productos">
