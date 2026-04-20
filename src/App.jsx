@@ -293,8 +293,8 @@ const SHEETS_CONFIG = {
 };
 
 const SHIPPING = {
-  "Zona Sur":       15000,
-  "Zona Norte":     25000,
+  "Zona Sur":       10000,
+  "Zona Norte":     15000,
   "Resto del País": null,
 };
 
