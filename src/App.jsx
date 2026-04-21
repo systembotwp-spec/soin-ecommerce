@@ -296,8 +296,8 @@ const SHEETS_CONFIG = {
 };
 
 const SHIPPING = {
-  "Zona Sur":       10000,
-  "Zona Norte":     15000,
+  "Área Metropolitana": 15000,
+  "Periferias Área Metro..": null,
   "Resto del País": null,
 };
 
