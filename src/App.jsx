@@ -999,6 +999,145 @@ const injectStyles = () => (
     }
     .order-catalog-btn:hover { background:${C.greenMid}; transform:translateY(-1px); }
 
+/* ── MI PEDIDO ── */
+    .mipedido-section { background:${C.warmWhite}; min-height:60vh; }
+    .mipedido-wrap {
+      max-width:560px; margin:0 auto; padding:8px 0 40px;
+    }
+    .mipedido-header { text-align:center; margin-bottom:36px; }
+    .mipedido-icon-wrap {
+      width:60px; height:60px; border-radius:50%;
+      background:${C.greenMist}; border:2px solid ${C.greenPale};
+      display:flex; align-items:center; justify-content:center;
+      margin:0 auto 14px;
+    }
+    .mipedido-title {
+      font-family:var(--f-display); font-size:clamp(24px,3vw,34px);
+      font-weight:var(--w-reg); color:${C.greenDark}; margin-bottom:8px;
+    }
+    .mipedido-title em { font-style:italic; color:${C.greenMid}; }
+    .mipedido-sub {
+      font-family:var(--f-body); font-size:var(--t-meta); color:${C.textMuted}; line-height:1.7;
+    }
+    .mipedido-search-form { margin-bottom:28px; }
+    .mipedido-field { display:flex; flex-direction:column; gap:7px; }
+    .mipedido-field-label {
+      font-family:var(--f-body); font-size:var(--t-label); font-weight:var(--w-semi);
+      letter-spacing:var(--ls-label); text-transform:uppercase; color:${C.greenDark};
+    }
+    .mipedido-input-row { display:flex; gap:10px; }
+    .mipedido-input {
+      flex:1; padding:13px 16px; border-radius:12px;
+      border:1.5px solid ${C.border}; background:#fff;
+      font-family:var(--f-body); font-size:var(--t-body); color:${C.text};
+      outline:none; transition:border-color .2s, box-shadow .2s;
+    }
+    .mipedido-input:focus { border-color:${C.greenMid}; box-shadow:0 0 0 3px rgba(74,122,90,.12); }
+    .mipedido-input::placeholder { color:${C.textMuted}; }
+    .mipedido-search-btn {
+      padding:13px 22px; border-radius:12px; border:none;
+      background:${C.greenDark}; color:#fff;
+      font-family:var(--f-body); font-size:var(--t-btn); font-weight:var(--w-bold);
+      cursor:pointer; display:flex; align-items:center; gap:7px;
+      transition:background .2s; white-space:nowrap;
+    }
+    .mipedido-search-btn:hover { background:${C.greenMid}; }
+    .mipedido-search-btn.loading { opacity:.7; cursor:wait; }
+    .mipedido-error {
+      font-family:var(--f-body); font-size:var(--t-small); color:#c0392b;
+      background:#fdf0f0; border:1px solid #f5c6c6; border-radius:8px;
+      padding:9px 12px; margin-top:4px;
+    }
+    /* Resultado */
+    .mipedido-result { display:flex; flex-direction:column; gap:16px; }
+    .mipedido-result-header {
+      display:flex; justify-content:space-between; align-items:flex-start;
+      padding:16px; background:${C.greenMist}; border-radius:14px;
+      border:1.5px solid ${C.greenPale};
+    }
+    .mipedido-result-meta { display:flex; flex-direction:column; gap:3px; }
+    .mipedido-result-id {
+      font-family:var(--f-body); font-size:var(--t-small); font-weight:var(--w-bold);
+      color:${C.greenDark}; letter-spacing:.04em;
+    }
+    .mipedido-result-date {
+      font-family:var(--f-body); font-size:var(--t-small); color:${C.textMuted};
+    }
+    .mipedido-badge {
+      background:${C.greenDark}; color:#fff; border-radius:50px;
+      padding:4px 12px; font-family:var(--f-body); font-size:10px;
+      font-weight:var(--w-bold); text-transform:uppercase; letter-spacing:.06em;
+    }
+    .mipedido-cliente-info {
+      padding:14px 16px; background:#fff;
+      border:1.5px solid ${C.border}; border-radius:14px;
+      display:flex; flex-direction:column; gap:5px;
+    }
+    .mipedido-cliente-info p {
+      font-family:var(--f-body); font-size:var(--t-meta); color:${C.textMuted}; line-height:1.5;
+    }
+    .mipedido-cliente-info strong { color:${C.greenDark}; font-weight:var(--w-semi); }
+    .mipedido-items-title {
+      font-family:var(--f-body); font-size:var(--t-label); font-weight:var(--w-semi);
+      letter-spacing:var(--ls-label); text-transform:uppercase; color:${C.greenMid};
+      display:flex; align-items:center; gap:6px;
+    }
+    .mipedido-items {
+      border:1.5px solid ${C.border}; border-radius:14px; overflow:hidden; background:#fff;
+    }
+    .mipedido-item {
+      display:flex; justify-content:space-between; align-items:flex-start;
+      padding:13px 16px; border-bottom:1px solid ${C.border};
+    }
+    .mipedido-item:last-child { border-bottom:none; }
+    .mipedido-item-info { flex:1; }
+    .mipedido-item-name {
+      font-family:var(--f-display); font-size:15px; color:${C.greenDark};
+      font-weight:var(--w-reg); margin-bottom:2px;
+    }
+    .mipedido-item-pres {
+      font-family:var(--f-body); font-size:11px; color:${C.textMuted}; margin-bottom:2px;
+    }
+    .mipedido-item-qty {
+      font-family:var(--f-body); font-size:11px; color:${C.greenMid}; font-weight:var(--w-semi);
+    }
+    .mipedido-item-price {
+      font-family:var(--f-display); font-size:15px; font-weight:600; color:${C.greenDark};
+      white-space:nowrap;
+    }
+    .mipedido-totals {
+      padding:14px 16px; background:${C.greenMist};
+      border:1.5px solid ${C.greenPale}; border-radius:14px;
+      display:flex; flex-direction:column; gap:7px;
+    }
+    .mipedido-total-row {
+      display:flex; justify-content:space-between;
+      font-family:var(--f-body); font-size:var(--t-meta); color:${C.textMuted};
+    }
+    .mipedido-grand {
+      display:flex; justify-content:space-between; align-items:baseline;
+      padding-top:10px; border-top:1px solid ${C.greenPale}; margin-top:4px;
+      font-family:var(--f-display); font-size:22px; font-weight:600; color:${C.greenDark};
+    }
+    .mipedido-actions { display:flex; flex-direction:column; gap:10px; }
+    .mipedido-action-primary {
+      width:100%; padding:15px; border-radius:50px; border:none;
+      background:${C.greenDark}; color:#fff;
+      font-family:var(--f-body); font-size:var(--t-btn); font-weight:var(--w-bold);
+      letter-spacing:var(--ls-btn); text-transform:uppercase;
+      cursor:pointer; display:flex; align-items:center; justify-content:center; gap:9px;
+      transition:background .2s, transform .15s;
+    }
+    .mipedido-action-primary:hover { background:${C.greenMid}; transform:translateY(-1px); }
+    .mipedido-action-secondary {
+      width:100%; padding:12px; border-radius:50px;
+      border:1.5px solid ${C.border}; background:#fff; color:${C.textMuted};
+      font-family:var(--f-body); font-size:var(--t-btn); font-weight:var(--w-semi);
+      cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px;
+      transition:border-color .2s, color .2s;
+    }
+    .mipedido-action-secondary:hover { border-color:${C.greenMid}; color:${C.greenDark}; }
+
     /* ── TOASTS ── */
     .toast-wrap { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:8px; z-index:2000; pointer-events:none; }
     .toast { background:${C.greenDark}; color:#fff; padding:10px 22px; border-radius:50px; font-family:var(--f-body); font-size:var(--t-meta); font-weight:var(--w-semi); white-space:nowrap; box-shadow:0 6px 20px rgba(45,74,53,.3); border-left:3px solid ${C.gold}; animation:toastIn .35s cubic-bezier(.16,1,.3,1); }
@@ -1325,6 +1464,7 @@ const handleCheckout = useCallback(async () => {
         <div className="nav-links">
           <button className={`nav-link tap ${view==="inicio"?"active":""}`} onClick={() => goTo("inicio")}>Inicio</button>
           <button className={`nav-link tap ${view==="catalogo"?"active":""}`} onClick={() => goTo("catalogo")}>Tienda</button>
+          <button className={`nav-link tap ${view==="mipedido"?"active":""}`} onClick={() => goTo("mipedido")}>Mi Pedido</button>
           <button
             className={`cart-trigger tap${shaking?" shake":""}`}
             onClick={() => setDrawerOpen(true)}
@@ -1336,7 +1476,19 @@ const handleCheckout = useCallback(async () => {
           </button>
         </div>
       </nav>
-
+      
+ {/* MOBILE MENU OVERLAY */}
+      {mobileMenuOpen && (
+        <div className="mobile-menu-overlay" onClick={() => setMobileMenuOpen(false)}>
+          <nav className="mobile-menu tap" onClick={(e) => e.stopPropagation()} role="navigation">
+            <button className="mobile-menu-close tap" onClick={() => setMobileMenuOpen(false)} aria-label="Cerrar menú"><X size={20} /></button>
+            <button className={`mobile-menu-item tap ${view==="inicio"?"active":""}`} onClick={() => goTo("inicio")}>Inicio</button>
+            <button className={`mobile-menu-item tap ${view==="catalogo"?"active":""}`} onClick={() => goTo("catalogo")}>Tienda</button>
+            <button className={`mobile-menu-item tap ${view==="mipedido"?"active":""}`} onClick={() => goTo("mipedido")}>Mi Pedido</button>
+          </nav>
+        </div>
+      )}
+      
       {/* ══ INICIO ══ */}
       {view === "inicio" && (
         <>
