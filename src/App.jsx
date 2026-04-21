@@ -1643,6 +1643,105 @@ const handleCheckout = useCallback(async () => {
         </section>
       )}
 
+
+      {/* ══ MI PEDIDO ══ */}
+      {view === "mipedido" && (
+        <section className="section mipedido-section" aria-labelledby="mp-h">
+          <div className="mipedido-wrap">
+            <div className="mipedido-header">
+              <div className="mipedido-icon-wrap"><ClipboardList size={28} color={C.greenMid} aria-hidden="true" /></div>
+              <h2 className="mipedido-title" id="mp-h">Mi último <em>pedido</em></h2>
+              <p className="mipedido-sub">Ingresa tu número de celular y cargamos tu último pedido registrado.</p>
+            </div>
+
+            {/* Formulario de búsqueda */}
+            {!pedidoData && (
+              <div className="mipedido-search-form">
+                <label className="mipedido-field">
+                  <span className="mipedido-field-label">Número de celular</span>
+                  <div className="mipedido-input-row">
+                    <input
+                      className="mipedido-input"
+                      type="tel"
+                      value={pedidoPhone}
+                      onChange={(e) => { setPedidoPhone(e.target.value); setPedidoError(null); }}
+                      onKeyDown={(e) => e.key === "Enter" && buscarUltimoPedido()}
+                      placeholder="Ej. 300 123 4567"
+                      autoComplete="tel"
+                      aria-label="Celular para buscar tu pedido"
+                    />
+                    <button
+                      className={`mipedido-search-btn tap ${pedidoLoading ? "loading" : ""}`}
+                      onClick={buscarUltimoPedido}
+                      disabled={pedidoLoading}
+                      aria-label="Buscar pedido"
+                    >
+                      {pedidoLoading ? "Buscando…" : "Buscar"} <Search size={14} aria-hidden="true" />
+                    </button>
+                  </div>
+                  {pedidoError && <p className="mipedido-error" role="alert">{pedidoError}</p>}
+                </label>
+              </div>
+            )}
+
+            {/* Resultado del pedido */}
+            {pedidoData && (
+              <div className="mipedido-result">
+                {/* Header del pedido */}
+                <div className="mipedido-result-header">
+                  <div className="mipedido-result-meta">
+                    <span className="mipedido-result-id">Pedido #{pedidoData.cliente?.pedidoId || "—"}</span>
+                    <span className="mipedido-result-date">{pedidoData.cliente?.fecha || ""}</span>
+                  </div>
+                  <span className="mipedido-badge">{pedidoData.cliente?.estado || "Registrado"}</span>
+                </div>
+
+                {/* Info del cliente */}
+                <div className="mipedido-cliente-info">
+                  <p><strong>Cliente:</strong> {pedidoData.cliente?.nombreCompleto}</p>
+                  <p><strong>Dirección:</strong> {pedidoData.cliente?.direccionEntrega}</p>
+                  <p><strong>Zona:</strong> {pedidoData.cliente?.zonaEnvio} · <strong>Pago:</strong> {pedidoData.cliente?.tipoPago}</p>
+                </div>
+
+                {/* Productos del pedido */}
+                <p className="mipedido-items-title"><Package size={14} aria-hidden="true" /> Productos del pedido</p>
+                <div className="mipedido-items">
+                  {(pedidoData.items || []).map((item, i) => (
+                    <div key={i} className="mipedido-item">
+                      <div className="mipedido-item-info">
+                        <p className="mipedido-item-name">{item.producto}</p>
+                        {item.presentacion && <p className="mipedido-item-pres">{item.presentacion}</p>}
+                        <p className="mipedido-item-qty">{item.cantidad} unidad{item.cantidad !== 1 ? "es" : ""}</p>
+                      </div>
+                      <span className="mipedido-item-price">{fmt(item.subtotalLinea || item.precioUnitario)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Totales */}
+                <div className="mipedido-totals">
+                  <div className="mipedido-total-row"><span>Subtotal</span><span>{fmt(pedidoData.cliente?.subtotal)}</span></div>
+                  <div className="mipedido-total-row"><span>Envío</span><span>{pedidoData.cliente?.envio ? fmt(pedidoData.cliente.envio) : "Por confirmar"}</span></div>
+                  <div className="mipedido-grand"><span>Total</span><span>{fmt(pedidoData.cliente?.total)}</span></div>
+                </div>
+
+                {/* Botones de acción */}
+                <div className="mipedido-actions">
+                  <button className="mipedido-action-primary tap" onClick={cargarPedidoAlCarrito}>
+                    <ShoppingCart size={16} aria-hidden="true" />
+                    Repetir este pedido
+                  </button>
+                  <button className="mipedido-action-secondary tap" onClick={() => { setPedidoData(null); setPedidoPhone(""); setPedidoError(null); }}>
+                    <RotateCcw size={14} aria-hidden="true" />
+                    Buscar otro número
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}      
+
       {/* ══ POLÍTICAS ══ */}
       {policyView && (
         <div className="policy-section">
