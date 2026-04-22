@@ -1288,6 +1288,7 @@ export default function App() {
   const catalogProducts = sheetsProducts.length ? sheetsProducts : PRODUCTS;
   const [cart, setCart]             = usePersistedCart();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [view, setView]             = useState("inicio");
   const [policyView, setPolicyView] = useState(null); // "envios" | "devoluciones" | "datos"
   const [filterPet, setFilterPet]   = useState("");
@@ -1561,7 +1562,7 @@ const handleCheckout = useCallback(async () => {
     setDrawerOpen(true);
   }, [pedidoData, catalogProducts, addToCart, toast]);
 
-  const goTo = (v) => { setView(v); setPolicyView(null); setDrawerOpen(false); window.scrollTo({ top:0, behavior:"smooth" }); };
+  const goTo = (v) => { setView(v); setPolicyView(null); setDrawerOpen(false); setMobileMenuOpen(false); window.scrollTo({ top:0, behavior:"smooth" }); };
   const resetFilters = () => { setSearch(""); setFilterPet(""); setFilterCat(""); setFilterSubcat(""); };
   
   return (
