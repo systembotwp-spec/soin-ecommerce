@@ -1200,7 +1200,7 @@ const injectStyles = () => (
 
     /* ── MOBILE MENU ── */
     .mobile-menu-overlay {
-      display:none; position:fixed; inset:0; z-index:500;
+      display:block; position:fixed; inset:0; z-index:500;
       background:rgba(0,0,0,.45); backdrop-filter:blur(4px);
       animation:fadeIn .2s ease;
     }
