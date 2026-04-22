@@ -5,7 +5,8 @@ import {
   Leaf, Heart, Shield, Zap, PackageSearch,
   MapPin, Mail, Phone, Facebook, Instagram,
   FileText, RefreshCw, Lock, Eye, ChevronLeft,
-  Calendar, Repeat, Gift
+  Calendar, Repeat, Gift,
+  ClipboardList, Menu, Package, RotateCcw
 } from "lucide-react";
 
 /* ════════════════════════════════════════════════════════
@@ -999,144 +1000,6 @@ const injectStyles = () => (
     }
     .order-catalog-btn:hover { background:${C.greenMid}; transform:translateY(-1px); }
 
-/* ── MI PEDIDO ── */
-    .mipedido-section { background:${C.warmWhite}; min-height:60vh; }
-    .mipedido-wrap {
-      max-width:560px; margin:0 auto; padding:8px 0 40px;
-    }
-    .mipedido-header { text-align:center; margin-bottom:36px; }
-    .mipedido-icon-wrap {
-      width:60px; height:60px; border-radius:50%;
-      background:${C.greenMist}; border:2px solid ${C.greenPale};
-      display:flex; align-items:center; justify-content:center;
-      margin:0 auto 14px;
-    }
-    .mipedido-title {
-      font-family:var(--f-display); font-size:clamp(24px,3vw,34px);
-      font-weight:var(--w-reg); color:${C.greenDark}; margin-bottom:8px;
-    }
-    .mipedido-title em { font-style:italic; color:${C.greenMid}; }
-    .mipedido-sub {
-      font-family:var(--f-body); font-size:var(--t-meta); color:${C.textMuted}; line-height:1.7;
-    }
-    .mipedido-search-form { margin-bottom:28px; }
-    .mipedido-field { display:flex; flex-direction:column; gap:7px; }
-    .mipedido-field-label {
-      font-family:var(--f-body); font-size:var(--t-label); font-weight:var(--w-semi);
-      letter-spacing:var(--ls-label); text-transform:uppercase; color:${C.greenDark};
-    }
-    .mipedido-input-row { display:flex; gap:10px; }
-    .mipedido-input {
-      flex:1; padding:13px 16px; border-radius:12px;
-      border:1.5px solid ${C.border}; background:#fff;
-      font-family:var(--f-body); font-size:var(--t-body); color:${C.text};
-      outline:none; transition:border-color .2s, box-shadow .2s;
-    }
-    .mipedido-input:focus { border-color:${C.greenMid}; box-shadow:0 0 0 3px rgba(74,122,90,.12); }
-    .mipedido-input::placeholder { color:${C.textMuted}; }
-    .mipedido-search-btn {
-      padding:13px 22px; border-radius:12px; border:none;
-      background:${C.greenDark}; color:#fff;
-      font-family:var(--f-body); font-size:var(--t-btn); font-weight:var(--w-bold);
-      cursor:pointer; display:flex; align-items:center; gap:7px;
-      transition:background .2s; white-space:nowrap;
-    }
-    .mipedido-search-btn:hover { background:${C.greenMid}; }
-    .mipedido-search-btn.loading { opacity:.7; cursor:wait; }
-    .mipedido-error {
-      font-family:var(--f-body); font-size:var(--t-small); color:#c0392b;
-      background:#fdf0f0; border:1px solid #f5c6c6; border-radius:8px;
-      padding:9px 12px; margin-top:4px;
-    }
-    /* Resultado */
-    .mipedido-result { display:flex; flex-direction:column; gap:16px; }
-    .mipedido-result-header {
-      display:flex; justify-content:space-between; align-items:flex-start;
-      padding:16px; background:${C.greenMist}; border-radius:14px;
-      border:1.5px solid ${C.greenPale};
-    }
-    .mipedido-result-meta { display:flex; flex-direction:column; gap:3px; }
-    .mipedido-result-id {
-      font-family:var(--f-body); font-size:var(--t-small); font-weight:var(--w-bold);
-      color:${C.greenDark}; letter-spacing:.04em;
-    }
-    .mipedido-result-date {
-      font-family:var(--f-body); font-size:var(--t-small); color:${C.textMuted};
-    }
-    .mipedido-badge {
-      background:${C.greenDark}; color:#fff; border-radius:50px;
-      padding:4px 12px; font-family:var(--f-body); font-size:10px;
-      font-weight:var(--w-bold); text-transform:uppercase; letter-spacing:.06em;
-    }
-    .mipedido-cliente-info {
-      padding:14px 16px; background:#fff;
-      border:1.5px solid ${C.border}; border-radius:14px;
-      display:flex; flex-direction:column; gap:5px;
-    }
-    .mipedido-cliente-info p {
-      font-family:var(--f-body); font-size:var(--t-meta); color:${C.textMuted}; line-height:1.5;
-    }
-    .mipedido-cliente-info strong { color:${C.greenDark}; font-weight:var(--w-semi); }
-    .mipedido-items-title {
-      font-family:var(--f-body); font-size:var(--t-label); font-weight:var(--w-semi);
-      letter-spacing:var(--ls-label); text-transform:uppercase; color:${C.greenMid};
-      display:flex; align-items:center; gap:6px;
-    }
-    .mipedido-items {
-      border:1.5px solid ${C.border}; border-radius:14px; overflow:hidden; background:#fff;
-    }
-    .mipedido-item {
-      display:flex; justify-content:space-between; align-items:flex-start;
-      padding:13px 16px; border-bottom:1px solid ${C.border};
-    }
-    .mipedido-item:last-child { border-bottom:none; }
-    .mipedido-item-info { flex:1; }
-    .mipedido-item-name {
-      font-family:var(--f-display); font-size:15px; color:${C.greenDark};
-      font-weight:var(--w-reg); margin-bottom:2px;
-    }
-    .mipedido-item-pres {
-      font-family:var(--f-body); font-size:11px; color:${C.textMuted}; margin-bottom:2px;
-    }
-    .mipedido-item-qty {
-      font-family:var(--f-body); font-size:11px; color:${C.greenMid}; font-weight:var(--w-semi);
-    }
-    .mipedido-item-price {
-      font-family:var(--f-display); font-size:15px; font-weight:600; color:${C.greenDark};
-      white-space:nowrap;
-    }
-    .mipedido-totals {
-      padding:14px 16px; background:${C.greenMist};
-      border:1.5px solid ${C.greenPale}; border-radius:14px;
-      display:flex; flex-direction:column; gap:7px;
-    }
-    .mipedido-total-row {
-      display:flex; justify-content:space-between;
-      font-family:var(--f-body); font-size:var(--t-meta); color:${C.textMuted};
-    }
-    .mipedido-grand {
-      display:flex; justify-content:space-between; align-items:baseline;
-      padding-top:10px; border-top:1px solid ${C.greenPale}; margin-top:4px;
-      font-family:var(--f-display); font-size:22px; font-weight:600; color:${C.greenDark};
-    }
-    .mipedido-actions { display:flex; flex-direction:column; gap:10px; }
-    .mipedido-action-primary {
-      width:100%; padding:15px; border-radius:50px; border:none;
-      background:${C.greenDark}; color:#fff;
-      font-family:var(--f-body); font-size:var(--t-btn); font-weight:var(--w-bold);
-      letter-spacing:var(--ls-btn); text-transform:uppercase;
-      cursor:pointer; display:flex; align-items:center; justify-content:center; gap:9px;
-      transition:background .2s, transform .15s;
-    }
-    .mipedido-action-primary:hover { background:${C.greenMid}; transform:translateY(-1px); }
-    .mipedido-action-secondary {
-      width:100%; padding:12px; border-radius:50px;
-      border:1.5px solid ${C.border}; background:#fff; color:${C.textMuted};
-      font-family:var(--f-body); font-size:var(--t-btn); font-weight:var(--w-semi);
-      cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px;
-      transition:border-color .2s, color .2s;
-    }
-    .mipedido-action-secondary:hover { border-color:${C.greenMid}; color:${C.greenDark}; }
 
     /* ── TOASTS ── */
     .toast-wrap { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:8px; z-index:2000; pointer-events:none; }
@@ -1215,7 +1078,9 @@ const injectStyles = () => (
       .hero-cta           { font-size:9px; padding:8px 10px; gap:4px; max-width:100%; line-height:1.2; }
       .hero-text-mobile   { display:none; }
 
-      .nav-links .nav-link:not(.cart-trigger) { display:none; }
+      .nav-links .nav-link:not(.cart-trigger):not(.nav-hamburger) { display:none; }
+      .nav-hamburger { display:flex; }
+      .mobile-menu-overlay { display:block; }
       .nav { height:56px; }
       .nav-logo { height:38px; }
 
@@ -1250,6 +1115,161 @@ const injectStyles = () => (
     }
 
     .tap { cursor:pointer; user-select:none; }
+
+    /* ── NAV HAMBURGER — solo móvil ── */
+    .nav-hamburger {
+      display:none; background:none; border:none; cursor:pointer;
+      color:#2D4A35; padding:6px; border-radius:8px;
+      align-items:center; justify-content:center;
+      transition:background .2s;
+    }
+    .nav-hamburger:hover { background:#EAF2EB; }
+
+    /* ── MOBILE MENU ── */
+    .mobile-menu-overlay {
+      display:none; position:fixed; inset:0; z-index:500;
+      background:rgba(0,0,0,.45); backdrop-filter:blur(4px);
+      animation:fadeIn .2s ease;
+    }
+    .mobile-menu {
+      position:absolute; top:0; left:0; right:0;
+      background:#FAFAF6; padding:20px 24px 32px;
+      border-bottom-left-radius:20px; border-bottom-right-radius:20px;
+      display:flex; flex-direction:column; gap:4px;
+      box-shadow:0 8px 32px rgba(0,0,0,.18);
+      animation:slideDown .28s cubic-bezier(.16,1,.3,1);
+    }
+    @keyframes slideDown { from{transform:translateY(-100%);opacity:0} to{transform:translateY(0);opacity:1} }
+    .mobile-menu-close {
+      align-self:flex-end; width:34px; height:34px; border-radius:50%;
+      background:#EAF2EB; border:none; display:flex; align-items:center;
+      justify-content:center; cursor:pointer; color:#2D4A35; margin-bottom:8px;
+      transition:background .2s;
+    }
+    .mobile-menu-close:hover { background:#C8DECA; }
+    .mobile-menu-item {
+      width:100%; text-align:left; padding:14px 16px; border:none;
+      background:none; border-radius:12px; cursor:pointer;
+      font-family:var(--f-body); font-size:16px; font-weight:var(--w-semi);
+      color:#7A7A6A; transition:background .2s, color .2s;
+    }
+    .mobile-menu-item:hover,.mobile-menu-item.active {
+      background:#EAF2EB; color:#2D4A35;
+    }
+
+    /* ── MI PEDIDO — estilos de búsqueda ── */
+    .mipedido-section { background:#FAFAF6; min-height:70vh; }
+    .mipedido-wrap { max-width:560px; margin:0 auto; padding:8px 0 40px; }
+    .mipedido-header { text-align:center; margin-bottom:36px; }
+    .mipedido-icon-wrap {
+      width:64px; height:64px; border-radius:50%;
+      background:#EAF2EB; border:2px solid #C8DECA;
+      display:flex; align-items:center; justify-content:center; margin:0 auto 16px;
+    }
+    .mipedido-title {
+      font-family:var(--f-display); font-size:clamp(24px,3vw,34px);
+      font-weight:var(--w-reg); color:#2D4A35; margin-bottom:8px;
+    }
+    .mipedido-title em { font-style:italic; color:#4A7A5A; }
+    .mipedido-sub { font-family:var(--f-body); font-size:var(--t-meta); color:#7A7A6A; line-height:1.7; }
+    .mipedido-search-form { margin-bottom:28px; }
+    .mipedido-field { display:flex; flex-direction:column; gap:7px; }
+    .mipedido-field-label {
+      font-family:var(--f-body); font-size:var(--t-label); font-weight:var(--w-semi);
+      letter-spacing:var(--ls-label); text-transform:uppercase; color:#2D4A35;
+    }
+    .mipedido-input-row { display:flex; gap:10px; }
+    .mipedido-input {
+      flex:1; padding:13px 16px; border-radius:12px;
+      border:1.5px solid rgba(74,122,90,0.18); background:#fff;
+      font-family:var(--f-body); font-size:var(--t-body); color:#2E2E24;
+      outline:none; transition:border-color .2s, box-shadow .2s;
+    }
+    .mipedido-input:focus { border-color:#4A7A5A; box-shadow:0 0 0 3px rgba(74,122,90,.12); }
+    .mipedido-input::placeholder { color:#7A7A6A; }
+    .mipedido-search-btn {
+      padding:13px 22px; border-radius:12px; border:none;
+      background:#2D4A35; color:#fff;
+      font-family:var(--f-body); font-size:var(--t-btn); font-weight:var(--w-bold);
+      cursor:pointer; display:flex; align-items:center; gap:7px;
+      transition:background .2s; white-space:nowrap;
+    }
+    .mipedido-search-btn:hover { background:#4A7A5A; }
+    .mipedido-search-btn:disabled { opacity:.7; cursor:wait; }
+    .mipedido-error {
+      font-family:var(--f-body); font-size:var(--t-small); color:#c0392b;
+      background:#fdf0f0; border:1px solid #f5c6c6; border-radius:8px; padding:9px 12px;
+    }
+    .mipedido-result { display:flex; flex-direction:column; gap:16px; }
+    .mipedido-result-header {
+      display:flex; justify-content:space-between; align-items:flex-start;
+      padding:16px; background:#EAF2EB; border-radius:14px; border:1.5px solid #C8DECA;
+    }
+    .mipedido-result-meta { display:flex; flex-direction:column; gap:3px; }
+    .mipedido-result-id {
+      font-family:var(--f-body); font-size:var(--t-small); font-weight:var(--w-bold);
+      color:#2D4A35; letter-spacing:.04em;
+    }
+    .mipedido-result-date { font-family:var(--f-body); font-size:var(--t-small); color:#7A7A6A; }
+    .mipedido-badge {
+      background:#2D4A35; color:#fff; border-radius:50px; padding:4px 12px;
+      font-family:var(--f-body); font-size:10px; font-weight:var(--w-bold);
+      text-transform:uppercase; letter-spacing:.06em;
+    }
+    .mipedido-cliente-info {
+      padding:14px 16px; background:#fff; border:1.5px solid rgba(74,122,90,0.18);
+      border-radius:14px; display:flex; flex-direction:column; gap:5px;
+    }
+    .mipedido-cliente-info p { font-family:var(--f-body); font-size:var(--t-meta); color:#7A7A6A; line-height:1.5; }
+    .mipedido-cliente-info strong { color:#2D4A35; font-weight:var(--w-semi); }
+    .mipedido-items-title {
+      font-family:var(--f-body); font-size:var(--t-label); font-weight:var(--w-semi);
+      letter-spacing:var(--ls-label); text-transform:uppercase; color:#4A7A5A;
+      display:flex; align-items:center; gap:6px; margin-top:4px;
+    }
+    .mipedido-items { border:1.5px solid rgba(74,122,90,0.18); border-radius:14px; overflow:hidden; background:#fff; }
+    .mipedido-item {
+      display:flex; justify-content:space-between; align-items:flex-start;
+      padding:13px 16px; border-bottom:1px solid rgba(74,122,90,0.18);
+    }
+    .mipedido-item:last-child { border-bottom:none; }
+    .mipedido-item-info { flex:1; }
+    .mipedido-item-name { font-family:var(--f-display); font-size:15px; color:#2D4A35; margin-bottom:2px; }
+    .mipedido-item-pres { font-family:var(--f-body); font-size:11px; color:#7A7A6A; margin-bottom:2px; }
+    .mipedido-item-qty { font-family:var(--f-body); font-size:11px; color:#4A7A5A; font-weight:var(--w-semi); }
+    .mipedido-item-price { font-family:var(--f-display); font-size:15px; font-weight:600; color:#2D4A35; white-space:nowrap; }
+    .mipedido-totals {
+      padding:14px 16px; background:#EAF2EB; border:1.5px solid #C8DECA;
+      border-radius:14px; display:flex; flex-direction:column; gap:7px;
+    }
+    .mipedido-total-row {
+      display:flex; justify-content:space-between;
+      font-family:var(--f-body); font-size:var(--t-meta); color:#7A7A6A;
+    }
+    .mipedido-grand {
+      display:flex; justify-content:space-between; align-items:baseline;
+      padding-top:10px; border-top:1px solid #C8DECA; margin-top:4px;
+      font-family:var(--f-display); font-size:22px; font-weight:600; color:#2D4A35;
+    }
+    .mipedido-actions { display:flex; flex-direction:column; gap:10px; }
+    .mipedido-action-primary {
+      width:100%; padding:15px; border-radius:50px; border:none;
+      background:#2D4A35; color:#fff;
+      font-family:var(--f-body); font-size:var(--t-btn); font-weight:var(--w-bold);
+      letter-spacing:var(--ls-btn); text-transform:uppercase;
+      cursor:pointer; display:flex; align-items:center; justify-content:center; gap:9px;
+      transition:background .2s, transform .15s;
+    }
+    .mipedido-action-primary:hover { background:#4A7A5A; transform:translateY(-1px); }
+    .mipedido-action-secondary {
+      width:100%; padding:12px; border-radius:50px;
+      border:1.5px solid rgba(74,122,90,0.18); background:#fff; color:#7A7A6A;
+      font-family:var(--f-body); font-size:var(--t-btn); font-weight:var(--w-semi);
+      cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px;
+      transition:border-color .2s, color .2s;
+    }
+    .mipedido-action-secondary:hover { border-color:#4A7A5A; color:#2D4A35; }
+
     .tap:active { opacity:.76; transform:scale(.97); transition:.1s; }
   `}</style>
 );
@@ -1451,6 +1471,92 @@ const handleCheckout = useCallback(async () => {
     };
   }, [drawerOpen]);
 
+  /* ── Busca el último pedido por celular (compatível con Apps Script getLastOrder) ── */
+  const buscarUltimoPedido = useCallback(async () => {
+    const phone = pedidoPhone.trim().replace(/\s+/g, "");
+    if (!phone || phone.length < 7) {
+      setPedidoError("Ingresa un número de celular válido (mínimo 7 dígitos).");
+      return;
+    }
+    setPedidoLoading(true);
+    setPedidoError(null);
+    setPedidoData(null);
+    try {
+      const url = new URL(SHEETS_CONFIG.scriptUrl);
+      url.searchParams.set("action", "getLastOrder");  // Nombre exacto del Apps Script
+      url.searchParams.set("celular", phone);           // Parámetro exacto del Apps Script
+      const res = await fetch(url.toString());
+      if (!res.ok) throw new Error(`Error al consultar el pedido (HTTP ${res.status})`);
+      const ct = res.headers.get("content-type") || "";
+      if (!ct.includes("application/json"))
+        throw new Error("El servidor no devolvió JSON. Verifica que el Apps Script esté publicado como Web App pública.");
+      const data = await res.json();
+      if (data?.error) throw new Error(data.error);
+      if (!data?.cliente) throw new Error("No encontramos pedidos con ese número de celular.");
+      // El Apps Script devuelve { cliente: {...}, detalle: [[...]] }
+      // Normalizamos detalle (array de arrays) a array de objetos
+      const items = (data.detalle || []).map((row) => ({
+        productoId:    row[3] ?? "",
+        producto:      row[4] ?? "",
+        presentacion:  row[5] ?? "",
+        cantidad:      Number(row[6]) || 1,
+        precioUnitario: Number(row[7]) || 0,
+        subtotalLinea:  Number(row[8]) || 0,
+      }));
+      setPedidoData({ cliente: data.cliente, items });
+    } catch (e) {
+      setPedidoError(e.message);
+    } finally {
+      setPedidoLoading(false);
+    }
+  }, [pedidoPhone]);
+
+  /* ── Carga los productos del pedido al carrito ── */
+  const cargarPedidoAlCarrito = useCallback(() => {
+    if (!pedidoData?.items?.length) return;
+    let agregados = 0;
+    pedidoData.items.forEach((item) => {
+      const found = catalogProducts.find(
+        (p) => p.id === item.productoId || normalize(p.name) === normalize(item.producto)
+      );
+      if (found) {
+        const variants = getProductVariants(found);
+        const variant =
+          variants.find((v) => normalize(v.presentation) === normalize(item.presentacion || "")) ||
+          variants[0];
+        for (let i = 0; i < Math.max(1, item.cantidad); i++) {
+          addToCart({
+            ...found,
+            cartId: variant.id,
+            presentation: variant.presentation,
+            price: variant.price,
+            salePrice: variant.salePrice,
+            img: variant.img || found.img,
+            variants: undefined,
+            images: undefined,
+          });
+        }
+      } else {
+        // Producto no está en catálogo, lo agrega con datos del pedido
+        for (let i = 0; i < Math.max(1, item.cantidad); i++) {
+          addToCart({
+            id: item.productoId || item.producto,
+            name: item.producto,
+            presentation: item.presentacion || "",
+            price: item.precioUnitario || 0,
+            salePrice: null,
+            img: "",
+            cartId: `${item.productoId || item.producto}::${item.presentacion || "Única"}`,
+            qty: 1,
+          });
+        }
+      }
+      agregados++;
+    });
+    toast(`✓ ${agregados} producto${agregados !== 1 ? "s" : ""} del pedido agregado${agregados !== 1 ? "s" : ""} al carrito`);
+    setDrawerOpen(true);
+  }, [pedidoData, catalogProducts, addToCart, toast]);
+
   const goTo = (v) => { setView(v); setPolicyView(null); setDrawerOpen(false); window.scrollTo({ top:0, behavior:"smooth" }); };
   const resetFilters = () => { setSearch(""); setFilterPet(""); setFilterCat(""); setFilterSubcat(""); };
   
@@ -1465,6 +1571,10 @@ const handleCheckout = useCallback(async () => {
           <button className={`nav-link tap ${view==="inicio"?"active":""}`} onClick={() => goTo("inicio")}>Inicio</button>
           <button className={`nav-link tap ${view==="catalogo"?"active":""}`} onClick={() => goTo("catalogo")}>Tienda</button>
           <button className={`nav-link tap ${view==="mipedido"?"active":""}`} onClick={() => goTo("mipedido")}>Mi Pedido</button>
+          {/* Hamburger — solo móvil */}
+          <button className="nav-hamburger tap" onClick={() => setMobileMenuOpen(v => !v)} aria-label="Abrir menú" aria-expanded={mobileMenuOpen}>
+            <Menu size={22} aria-hidden="true" />
+          </button>
           <button
             className={`cart-trigger tap${shaking?" shake":""}`}
             onClick={() => setDrawerOpen(true)}
