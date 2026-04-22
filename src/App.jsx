@@ -1140,15 +1140,17 @@ const injectStyles = () => (
       .hero-cta           { font-size:9px; padding:8px 10px; gap:4px; max-width:100%; line-height:1.2; }
       .hero-text-mobile   { display:none; }
 
-      .nav { height:56px; padding:0 4%; }
-      .nav-links { gap:8px; margin-left:auto; }
+      .nav { height:56px; padding:0 4%; gap:8px; }
+      .nav-links { gap:8px; margin-left:auto; flex-shrink:0; }
       .nav-links .nav-link { display:none; }
-      .nav-links .nav-hamburger { order:1; flex:0 0 auto; }
+      .nav-links .nav-hamburger { order:1; flex:0 0 auto; display:flex; }
       .nav-links .cart-trigger { order:2; flex:0 0 auto; }
       .nav-actions { gap:8px; margin-left:auto; }
-      .nav-hamburger { display:flex; }
-      .nav-logo { height:38px; }
-      .cart-trigger { padding:8px 12px; font-size:11px; gap:6px; }
+      .nav-hamburger { display:flex; min-width:40px; min-height:40px; }
+      .nav-logo { height:38px; max-width:132px; object-fit:contain; }
+      .cart-trigger { width:40px; height:40px; padding:0; font-size:0; gap:0; border-radius:12px; justify-content:center; flex-shrink:0; }
+      .cart-trigger svg { width:18px; height:18px; }
+      .cart-badge { top:-5px; right:-5px; width:18px; height:18px; font-size:9px; }
 
       .trust              { display:grid; grid-template-columns:1fr 1fr; }
       .trust-item         { min-width:0; padding:13px 10px; border-right:none; max-width:100%; border-bottom:1px solid rgba(255,255,255,.08); }
@@ -1173,6 +1175,10 @@ const injectStyles = () => (
     }
 
     @media(max-width:380px){
+      .nav { padding:0 3%; gap:6px; }
+      .nav-logo { height:34px; max-width:110px; }
+      .nav-links { gap:6px; }
+      .nav-hamburger, .cart-trigger { width:38px; height:38px; min-width:38px; min-height:38px; }
       .hero-content       { max-width:46%; }
       .hero-title         { font-size:clamp(16px,4.9vw,22px); }
       .hero-sub           { font-size:9px; margin-bottom:9px; max-width:150px; }
