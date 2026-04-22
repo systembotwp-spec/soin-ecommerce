@@ -365,9 +365,7 @@ const SHIPPING = {
 
 const PAYMENT_METHODS = [
   "Transferencia bancaria",
-  "Efectivo",
   "Wompi",
-  "T. crédito o débito",
 ];
 
 const createOrderId = () => {
