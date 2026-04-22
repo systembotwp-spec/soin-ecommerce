@@ -1304,6 +1304,10 @@ export default function App() {
   const [orderSaving, setOrderSaving] = useState(false);
   const [recurringOrder, setRecurringOrder] = useState(false);
   const [recurringDate,  setRecurringDate]  = useState("");
+  const [pedidoPhone, setPedidoPhone] = useState("");
+  const [pedidoLoading, setPedidoLoading] = useState(false);
+  const [pedidoError, setPedidoError] = useState(null);
+  const [pedidoData, setPedidoData] = useState(null);
   const { toasts, push: toast }     = useToast();
   const [shaking, shake]            = useCartShake();
 
