@@ -253,6 +253,67 @@ const payloadToRows = (payload) => {
   return firstCell === "id" || secondCell === "nombre" ? rows.slice(1) : rows;
 };
 
+const getOrderField = (source, ...keys) => {
+  if (!source || typeof source !== "object") return null;
+
+  const byKey = Object.entries(source).reduce((acc, [key, value]) => {
+    acc[normalizeKey(key)] = value;
+    return acc;
+  }, {});
+
+  for (const key of keys) {
+    const value = byKey[normalizeKey(key)];
+    if (value != null && value !== "") return value;
+  }
+
+  return null;
+};
+
+const rowToPedidoCliente = (row = []) => ({
+  pedidoId: row[0] ?? "",
+  fecha: row[1] ?? "",
+  nombreCompleto: row[2] ?? "",
+  celular: row[3] ?? "",
+  direccionEntrega: row[4] ?? "",
+  zonaEnvio: row[5] ?? "",
+  tipoPago: row[6] ?? "",
+  subtotal: toMoneyNumber(row[7]),
+  envio: toMoneyNumber(row[8]),
+  total: toMoneyNumber(row[9]),
+  estado: row[10] ?? "",
+});
+
+const normalizePedidoCliente = (clienteRaw, items = []) => {
+  const clienteBase = Array.isArray(clienteRaw)
+    ? (Array.isArray(clienteRaw[0]) ? rowToPedidoCliente(clienteRaw[0]) : typeof clienteRaw[0] === "object" ? clienteRaw[0] : rowToPedidoCliente(clienteRaw))
+    : (clienteRaw || {});
+
+  const subtotalItems = items.reduce((sum, item) => {
+    const cantidad = toMoneyNumber(item.cantidad) ?? 1;
+    const precioUnitario = toMoneyNumber(item.precioUnitario) ?? 0;
+    const subtotalLinea = toMoneyNumber(item.subtotalLinea);
+    return sum + (subtotalLinea ?? (cantidad * precioUnitario));
+  }, 0);
+
+  const subtotal = toMoneyNumber(getOrderField(clienteBase, "subtotal", "subTotal", "subtotalPedido"));
+  const envio = toMoneyNumber(getOrderField(clienteBase, "envio", "envío", "costoEnvio", "costo envío", "shipping", "shippingCost"));
+  const total = toMoneyNumber(getOrderField(clienteBase, "total", "totalPedido", "montoTotal"));
+
+  return {
+    pedidoId: getOrderField(clienteBase, "pedidoId", "pedido", "idPedido", "orderId") || "",
+    fecha: getOrderField(clienteBase, "fecha", "fechaPedido", "createdAt") || "",
+    nombreCompleto: getOrderField(clienteBase, "nombreCompleto", "nombreCliente", "cliente", "nombre") || "",
+    celular: getOrderField(clienteBase, "celular", "telefono", "teléfono", "phone") || "",
+    direccionEntrega: getOrderField(clienteBase, "direccionEntrega", "direccion", "dirección", "direccionCliente") || "",
+    zonaEnvio: getOrderField(clienteBase, "zonaEnvio", "zona", "zonaDeEnvio") || "",
+    tipoPago: getOrderField(clienteBase, "tipoPago", "formaPago", "metodoPago", "métodoPago", "medioPago", "pago") || "",
+    subtotal: subtotal ?? subtotalItems,
+    envio,
+    total: total ?? ((subtotal ?? subtotalItems) + (envio ?? 0)),
+    estado: getOrderField(clienteBase, "estado", "status") || "Registrado",
+  };
+};
+
 /* datos locales — misma forma que rowToProduct */
 const PRODUCTS = [
   { id:"P001", name:"Alimento Premium Adulto",
@@ -1500,15 +1561,21 @@ const handleCheckout = useCallback(async () => {
       if (!data?.cliente) throw new Error("No encontramos pedidos con ese número de celular.");
       // El Apps Script devuelve { cliente: {...}, detalle: [[...]] }
       // Normalizamos detalle (array de arrays) a array de objetos
-      const items = (data.detalle || []).map((row) => ({
-        productoId:    row[3] ?? "",
-        producto:      row[4] ?? "",
-        presentacion:  row[5] ?? "",
-        cantidad:      Number(row[6]) || 1,
-        precioUnitario: Number(row[7]) || 0,
-        subtotalLinea:  Number(row[8]) || 0,
-      }));
-      setPedidoData({ cliente: data.cliente, items });
+      const items = (data.detalle || []).map((row) => {
+        const cantidad = toMoneyNumber(row[6]) ?? 1;
+        const precioUnitario = toMoneyNumber(row[7]) ?? 0;
+        const subtotalLinea = toMoneyNumber(row[8]) ?? (cantidad * precioUnitario);
+
+        return {
+          productoId: row[3] ?? "",
+          producto: row[4] ?? "",
+          presentacion: row[5] ?? "",
+          cantidad,
+          precioUnitario,
+          subtotalLinea,
+        };
+      });
+      setPedidoData({ cliente: normalizePedidoCliente(data.cliente, items), items });
     } catch (e) {
       setPedidoError(e.message);
     } finally {
@@ -1815,7 +1882,8 @@ const handleCheckout = useCallback(async () => {
                 <div className="mipedido-cliente-info">
                   <p><strong>Cliente:</strong> {pedidoData.cliente?.nombreCompleto}</p>
                   <p><strong>Dirección:</strong> {pedidoData.cliente?.direccionEntrega}</p>
-                  <p><strong>Zona:</strong> {pedidoData.cliente?.zonaEnvio} · <strong>Pago:</strong> {pedidoData.cliente?.tipoPago}</p>
+                  <p><strong>Zona:</strong> {pedidoData.cliente?.zonaEnvio} · <strong>Forma de Pago:</strong> {pedidoData.cliente?.tipoPago}</p>
+                  <p><strong>Envío:</strong> {pedidoData.cliente?.envio != null ? fmt(pedidoData.cliente.envio) : "Por confirmar"}</p>
                 </div>
 
                 {/* Productos del pedido */}
@@ -1836,7 +1904,7 @@ const handleCheckout = useCallback(async () => {
                 {/* Totales */}
                 <div className="mipedido-totals">
                   <div className="mipedido-total-row"><span>Subtotal</span><span>{fmt(pedidoData.cliente?.subtotal)}</span></div>
-                  <div className="mipedido-total-row"><span>Envío</span><span>{pedidoData.cliente?.envio ? fmt(pedidoData.cliente.envio) : "Por confirmar"}</span></div>
+                  <div className="mipedido-total-row"><span>Envío</span><span>{pedidoData.cliente?.envio != null ? fmt(pedidoData.cliente.envio) : "Por confirmar"}</span></div>
                   <div className="mipedido-grand"><span>Total</span><span>{fmt(pedidoData.cliente?.total)}</span></div>
                 </div>
 
