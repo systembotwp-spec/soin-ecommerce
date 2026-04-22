@@ -365,7 +365,9 @@ const SHIPPING = {
 
 const PAYMENT_METHODS = [
   "Transferencia bancaria",
+  "Efectivo",
   "Wompi",
+  "T. crédito o débito",
 ];
 
 const createOrderId = () => {
@@ -525,7 +527,8 @@ const injectStyles = () => (
     }
     .nav-logo { height:46px; cursor:pointer; transition:opacity .2s; }
     .nav-logo:hover { opacity:.75; }
-    .nav-links { display:flex; gap:28px; align-items:center; }
+    .nav-links { display:flex; gap:28px; align-items:center; margin-left:auto; }
+    .nav-actions { display:flex; align-items:center; gap:12px; }
     .nav-link {
       font-family:var(--f-body); font-size:var(--t-nav); font-weight:var(--w-semi);
       letter-spacing:var(--ls-nav); text-transform:uppercase;
@@ -1137,11 +1140,15 @@ const injectStyles = () => (
       .hero-cta           { font-size:9px; padding:8px 10px; gap:4px; max-width:100%; line-height:1.2; }
       .hero-text-mobile   { display:none; }
 
-      .nav-links .nav-link:not(.cart-trigger):not(.nav-hamburger) { display:none; }
+      .nav { height:56px; padding:0 4%; }
+      .nav-links { gap:8px; margin-left:auto; }
+      .nav-links .nav-link { display:none; }
+      .nav-links .nav-hamburger { order:1; flex:0 0 auto; }
+      .nav-links .cart-trigger { order:2; flex:0 0 auto; }
+      .nav-actions { gap:8px; margin-left:auto; }
       .nav-hamburger { display:flex; }
-      .mobile-menu-overlay { display:block; }
-      .nav { height:56px; }
       .nav-logo { height:38px; }
+      .cart-trigger { padding:8px 12px; font-size:11px; gap:6px; }
 
       .trust              { display:grid; grid-template-columns:1fr 1fr; }
       .trust-item         { min-width:0; padding:13px 10px; border-right:none; max-width:100%; border-bottom:1px solid rgba(255,255,255,.08); }
@@ -1177,12 +1184,13 @@ const injectStyles = () => (
 
     /* ── NAV HAMBURGER — solo móvil ── */
     .nav-hamburger {
-      display:none; background:none; border:none; cursor:pointer;
-      color:#2D4A35; padding:6px; border-radius:8px;
+      display:none; width:40px; height:40px; background:#fff; border:1px solid rgba(74,122,90,.16); cursor:pointer;
+      color:#2D4A35; padding:0; border-radius:12px;
       align-items:center; justify-content:center;
-      transition:background .2s;
+      transition:background .2s, border-color .2s, transform .15s;
+      flex-shrink:0;
     }
-    .nav-hamburger:hover { background:#EAF2EB; }
+    .nav-hamburger:hover { background:#EAF2EB; border-color:rgba(74,122,90,.3); transform:translateY(-1px); }
 
     /* ── MOBILE MENU ── */
     .mobile-menu-overlay {
