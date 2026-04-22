@@ -1486,6 +1486,12 @@ const handleCheckout = useCallback(async () => {
       return;
     }
 
+    const phoneDigits = customer.phone.replace(/\D/g, "");
+    if (phoneDigits.length !== 10) {
+      toast("El número de celular debe tener exactamente 10 dígitos");
+      return;
+    }
+
     // 2. Preparación de datos
     const orderId = createOrderId();
     const orderPayload = buildOrderPayload({
@@ -2194,9 +2200,11 @@ const handleCheckout = useCallback(async () => {
                           className="checkout-input"
                           type="tel"
                           value={customer.phone}
-                          onChange={(event) => updateCustomer("phone", event.target.value)}
+                          onChange={(event) => updateCustomer("phone", event.target.value.replace(/\D/g, "").slice(0, 10))}
                           placeholder="Ej. 300 123 4567"
                           autoComplete="tel"
+                          inputMode="numeric"
+                          maxLength={10}
                         />
                       </label>
 
