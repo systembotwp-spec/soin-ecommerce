@@ -1629,6 +1629,12 @@ const handleCheckout = useCallback(async () => {
     setDrawerOpen(true);
   }, [pedidoData, catalogProducts, addToCart, toast]);
 
+  const pedidoProductosTotal = useMemo(() =>
+    (pedidoData?.items || []).reduce((sum, item) =>
+      sum + (toMoneyNumber(item.subtotalLinea) ?? ((toMoneyNumber(item.precioUnitario) ?? 0) * (toMoneyNumber(item.cantidad) ?? 1)))
+    , 0),
+  [pedidoData]);
+
   const goTo = (v) => { setView(v); setPolicyView(null); setDrawerOpen(false); setMobileMenuOpen(false); window.scrollTo({ top:0, behavior:"smooth" }); };
   const resetFilters = () => { setSearch(""); setFilterPet(""); setFilterCat(""); setFilterSubcat(""); };
   
@@ -1869,24 +1875,16 @@ const handleCheckout = useCallback(async () => {
             {/* Resultado del pedido */}
             {pedidoData && (
               <div className="mipedido-result">
-                {/* Header del pedido */}
                 <div className="mipedido-result-header">
                   <div className="mipedido-result-meta">
                     <span className="mipedido-result-id">Pedido #{pedidoData.cliente?.pedidoId || "—"}</span>
-                    <span className="mipedido-result-date">{pedidoData.cliente?.fecha || ""}</span>
                   </div>
-                  <span className="mipedido-badge">{pedidoData.cliente?.estado || "Registrado"}</span>
                 </div>
 
-                {/* Info del cliente */}
                 <div className="mipedido-cliente-info">
                   <p><strong>Cliente:</strong> {pedidoData.cliente?.nombreCompleto}</p>
-                  <p><strong>Dirección:</strong> {pedidoData.cliente?.direccionEntrega}</p>
-                  <p><strong>Zona:</strong> {pedidoData.cliente?.zonaEnvio} · <strong>Forma de Pago:</strong> {pedidoData.cliente?.tipoPago}</p>
-                  <p><strong>Envío:</strong> {pedidoData.cliente?.envio != null ? fmt(pedidoData.cliente.envio) : "Por confirmar"}</p>
                 </div>
 
-                {/* Productos del pedido */}
                 <p className="mipedido-items-title"><Package size={14} aria-hidden="true" /> Productos del pedido</p>
                 <div className="mipedido-items">
                   {(pedidoData.items || []).map((item, i) => (
@@ -1901,14 +1899,10 @@ const handleCheckout = useCallback(async () => {
                   ))}
                 </div>
 
-                {/* Totales */}
                 <div className="mipedido-totals">
-                  <div className="mipedido-total-row"><span>Subtotal</span><span>{fmt(pedidoData.cliente?.subtotal)}</span></div>
-                  <div className="mipedido-total-row"><span>Envío</span><span>{pedidoData.cliente?.envio != null ? fmt(pedidoData.cliente.envio) : "Por confirmar"}</span></div>
-                  <div className="mipedido-grand"><span>Total</span><span>{fmt(pedidoData.cliente?.total)}</span></div>
+                  <div className="mipedido-grand"><span>Total productos</span><span>{fmt(pedidoProductosTotal)}</span></div>
                 </div>
 
-                {/* Botones de acción */}
                 <div className="mipedido-actions">
                   <button className="mipedido-action-primary tap" onClick={cargarPedidoAlCarrito}>
                     <ShoppingCart size={16} aria-hidden="true" />
