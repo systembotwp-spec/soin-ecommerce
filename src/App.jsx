@@ -314,6 +314,137 @@ const normalizePedidoCliente = (clienteRaw, items = []) => {
   };
 };
 
+const normalizeCedula = (value = "") =>
+  value.toString().replace(/\D/g, "");
+
+const rowToDriverOrder = (row = []) => ({
+  pedidoId: row[0] ?? "",
+  fecha: row[1] ?? "",
+  nombreCompleto: row[2] ?? "",
+  celular: row[3] ?? "",
+  direccionEntrega: row[4] ?? "",
+  zonaEnvio: row[5] ?? "",
+  tipoPago: row[6] ?? "",
+  subtotal: toMoneyNumber(row[7]),
+  envio: toMoneyNumber(row[8]),
+  total: toMoneyNumber(row[9]),
+  estado: row[10] ?? "",
+  programacion: row[11] ?? "",
+  fechaRecurrente: row[12] ?? "",
+  conductor: row[13] ?? "",
+  entrega: row[14] ?? row[10] ?? "",
+  observaciones: row[15] ?? "",
+});
+
+const normalizeDriverItem = (itemRaw = []) => {
+  const itemBase = Array.isArray(itemRaw)
+    ? {
+        pedidoId: itemRaw[0] ?? "",
+        productoId: itemRaw[3] ?? "",
+        producto: itemRaw[4] ?? "",
+        presentacion: itemRaw[5] ?? "",
+        cantidad: toMoneyNumber(itemRaw[6]) ?? 1,
+        precioUnitario: toMoneyNumber(itemRaw[7]) ?? 0,
+        subtotalLinea: toMoneyNumber(itemRaw[8]),
+      }
+    : itemRaw;
+
+  const cantidad = toMoneyNumber(getOrderField(itemBase, "cantidad", "qty")) ?? 1;
+  const precioUnitario = toMoneyNumber(getOrderField(itemBase, "precioUnitario", "precio", "price")) ?? 0;
+  const subtotalLinea = toMoneyNumber(getOrderField(itemBase, "subtotalLinea", "subtotal", "lineTotal"));
+
+  return {
+    pedidoId: getOrderField(itemBase, "pedidoId", "pedido", "orderId") || "",
+    productoId: getOrderField(itemBase, "productoId", "item", "idProducto") || "",
+    producto: getOrderField(itemBase, "producto", "nombreProducto", "name") || "",
+    presentacion: getOrderField(itemBase, "presentacion", "presentación", "presentation") || "",
+    cantidad,
+    precioUnitario,
+    subtotalLinea: subtotalLinea ?? (cantidad * precioUnitario),
+  };
+};
+
+const normalizeDriverOrder = (orderRaw, detailRows = []) => {
+  const orderBase = Array.isArray(orderRaw)
+    ? rowToDriverOrder(orderRaw)
+    : orderRaw;
+
+  return {
+    pedidoId: getOrderField(orderBase, "pedidoId", "pedido", "idPedido", "orderId") || "",
+    fecha: getOrderField(orderBase, "fecha", "fechaPedido", "createdAt") || "",
+    nombreCompleto: getOrderField(orderBase, "nombreCompleto", "nombreCliente", "cliente", "nombre") || "",
+    celular: getOrderField(orderBase, "celular", "telefono", "teléfono", "phone") || "",
+    direccionEntrega: getOrderField(orderBase, "direccionEntrega", "direccion", "dirección", "direccionCliente") || "",
+    zonaEnvio: getOrderField(orderBase, "zonaEnvio", "zona", "zonaDeEnvio") || "",
+    tipoPago: getOrderField(orderBase, "tipoPago", "formaPago", "metodoPago", "métodoPago", "medioPago", "pago") || "",
+    subtotal: toMoneyNumber(getOrderField(orderBase, "subtotal", "subTotal", "subtotalPedido")),
+    envio: toMoneyNumber(getOrderField(orderBase, "envio", "envío", "costoEnvio", "shipping", "shippingCost")),
+    total: toMoneyNumber(getOrderField(orderBase, "total", "totalPedido", "montoTotal")),
+    estado: getOrderField(orderBase, "estado", "status") || "Pendiente",
+    conductor: normalizeCedula(getOrderField(orderBase, "conductor", "driver", "transportador") || ""),
+    entrega: getOrderField(orderBase, "entrega", "estadoEntrega", "deliveryStatus") || "En proceso",
+    observaciones: getOrderField(orderBase, "observaciones", "observacion", "novedad", "nota") || "",
+    items: detailRows.map(normalizeDriverItem).filter((item) => item.producto || item.productoId),
+  };
+};
+
+const normalizeDriverOrdersResponse = (payload) => {
+  const ordersSource =
+    payload?.pedidos ||
+    payload?.orders ||
+    payload?.clientes ||
+    payload?.rows ||
+    payload?.data ||
+    (Array.isArray(payload) ? payload : []);
+
+  const maybeHeader = Array.isArray(ordersSource) ? ordersSource[0] : null;
+  const ordersRows =
+    Array.isArray(maybeHeader) &&
+    ["pedidoid", "pedido", "idpedido"].includes(normalizeKey(maybeHeader?.[0]))
+      ? ordersSource.slice(1)
+      : (Array.isArray(ordersSource) ? ordersSource : []);
+
+  const detailsSource =
+    payload?.detallePorPedido ||
+    payload?.detailsByOrder ||
+    payload?.itemsByOrder ||
+    payload?.detalle ||
+    payload?.details ||
+    {};
+
+  const detailMap = {};
+
+  if (Array.isArray(detailsSource)) {
+    const detailRows =
+      Array.isArray(detailsSource[0]) &&
+      ["pedidoid", "pedido", "orderid"].includes(normalizeKey(detailsSource?.[0]?.[0]))
+        ? detailsSource.slice(1)
+        : detailsSource;
+
+    detailRows.map(normalizeDriverItem).forEach((item) => {
+      if (!item.pedidoId) return;
+      if (!detailMap[item.pedidoId]) detailMap[item.pedidoId] = [];
+      detailMap[item.pedidoId].push(item);
+    });
+  } else if (detailsSource && typeof detailsSource === "object") {
+    Object.entries(detailsSource).forEach(([pedidoId, items]) => {
+      detailMap[pedidoId] = (Array.isArray(items) ? items : [])
+        .map(normalizeDriverItem)
+        .filter((item) => item.producto || item.productoId);
+    });
+  }
+
+  return ordersRows
+    .map((order) => {
+      const normalizedOrder = normalizeDriverOrder(
+        order,
+        detailMap[getOrderField(Array.isArray(order) ? rowToDriverOrder(order) : order, "pedidoId", "pedido", "idPedido", "orderId") || ""] || []
+      );
+      return normalizedOrder;
+    })
+    .filter((order) => order.pedidoId);
+};
+
 /* datos locales — misma forma que rowToProduct */
 const PRODUCTS = [
   { id:"P001", name:"Alimento Premium Adulto",
@@ -355,6 +486,8 @@ const SHEETS_CONFIG = {
   clientePage: "Cliente",
   detallePage: "DetallePedido",
   ordersAction: "createOrder",
+  driverOrdersAction: "getDriverOrders",
+  updateDeliveryAction: "updateDriverDelivery",
 };
 
 const SHIPPING = {
@@ -1341,6 +1474,112 @@ const injectStyles = () => (
     }
     .mipedido-action-secondary:hover { border-color:#4A7A5A; color:#2D4A35; }
 
+    .entregadores-wrap { max-width:920px; }
+    .delivery-search-card,
+    .delivery-card {
+      background:#fff; border:1.5px solid rgba(74,122,90,0.18); border-radius:20px;
+      box-shadow:0 14px 40px rgba(45,74,53,.08);
+    }
+    .delivery-search-card { padding:22px; margin-bottom:24px; }
+    .delivery-results { display:flex; flex-direction:column; gap:16px; }
+    .delivery-card { padding:18px; }
+    .delivery-card.expanded { border-color:#7AAB84; }
+    .delivery-summary {
+      width:100%; background:none; border:none; padding:0; text-align:left; cursor:pointer;
+      display:flex; justify-content:space-between; gap:16px; align-items:flex-start;
+    }
+    .delivery-summary-main { display:flex; flex-direction:column; gap:10px; }
+    .delivery-order-id {
+      font-family:var(--f-body); font-size:11px; font-weight:var(--w-bold);
+      letter-spacing:.08em; text-transform:uppercase; color:#4A7A5A;
+    }
+    .delivery-customer {
+      font-family:var(--f-display); font-size:26px; color:#2D4A35; line-height:1.05;
+    }
+    .delivery-summary-sub {
+      display:flex; flex-wrap:wrap; gap:8px 14px; font-family:var(--f-body);
+      font-size:12px; color:#7A7A6A;
+    }
+    .delivery-chip {
+      display:inline-flex; align-items:center; gap:6px; padding:6px 10px;
+      border-radius:999px; background:#EAF2EB; color:#2D4A35; font-weight:var(--w-semi);
+    }
+    .delivery-status {
+      display:inline-flex; align-items:center; justify-content:center; padding:8px 14px;
+      border-radius:999px; font-family:var(--f-body); font-size:11px; font-weight:var(--w-bold);
+      text-transform:uppercase; letter-spacing:.08em; white-space:nowrap;
+    }
+    .delivery-status.proceso { background:#fff4d6; color:#8a5b00; }
+    .delivery-status.entregado { background:#e7f7ec; color:#23643a; }
+    .delivery-status.reprogramado { background:#eef2ff; color:#3d4fb3; }
+    .delivery-status.cancelado { background:#fce8e8; color:#b53b3b; }
+    .delivery-status.default { background:#EAF2EB; color:#2D4A35; }
+    .delivery-chevron {
+      color:#4A7A5A; transition:transform .2s ease;
+    }
+    .delivery-chevron.open { transform:rotate(90deg); }
+    .delivery-body {
+      display:flex; flex-direction:column; gap:16px; margin-top:18px; padding-top:18px;
+      border-top:1px solid rgba(74,122,90,0.18);
+    }
+    .delivery-grid {
+      display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px;
+    }
+    .delivery-info-box {
+      background:#FAFAF6; border:1px solid rgba(74,122,90,0.14); border-radius:16px; padding:14px;
+    }
+    .delivery-info-label {
+      display:block; margin-bottom:6px; font-family:var(--f-body); font-size:10px;
+      font-weight:var(--w-bold); letter-spacing:.08em; text-transform:uppercase; color:#7A7A6A;
+    }
+    .delivery-info-value {
+      font-family:var(--f-body); font-size:14px; color:#2D4A35; line-height:1.55;
+    }
+    .delivery-status-actions {
+      display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px;
+    }
+    .delivery-status-btn {
+      padding:12px 10px; border-radius:14px; border:1.5px solid rgba(74,122,90,0.18);
+      background:#fff; color:#4A7A5A; font-family:var(--f-body); font-size:12px;
+      font-weight:var(--w-bold); cursor:pointer; transition:.2s ease;
+    }
+    .delivery-status-btn:hover,
+    .delivery-status-btn.active {
+      border-color:#4A7A5A; background:#EAF2EB; color:#2D4A35;
+    }
+    .delivery-notes {
+      width:100%; min-height:110px; resize:vertical; padding:14px 16px; border-radius:16px;
+      border:1.5px solid rgba(74,122,90,0.18); background:#fff; font-family:var(--f-body);
+      font-size:14px; color:#2E2E24; outline:none; transition:border-color .2s, box-shadow .2s;
+    }
+    .delivery-notes:focus { border-color:#4A7A5A; box-shadow:0 0 0 3px rgba(74,122,90,.12); }
+    .delivery-footer {
+      display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap;
+    }
+    .delivery-save-btn {
+      padding:13px 22px; border:none; border-radius:999px; background:#2D4A35; color:#fff;
+      font-family:var(--f-body); font-size:12px; font-weight:var(--w-bold); letter-spacing:.05em;
+      text-transform:uppercase; cursor:pointer; transition:background .2s;
+    }
+    .delivery-save-btn:hover { background:#4A7A5A; }
+    .delivery-save-btn:disabled { opacity:.7; cursor:wait; }
+    .delivery-helper {
+      font-family:var(--f-body); font-size:12px; color:#7A7A6A; line-height:1.6;
+    }
+    .delivery-empty {
+      text-align:center; padding:26px 18px; border-radius:18px; border:1.5px dashed #C8DECA;
+      background:#FAFAF6; color:#7A7A6A; font-family:var(--f-body);
+    }
+
+    @media (max-width: 740px) {
+      .delivery-grid,
+      .delivery-status-actions { grid-template-columns:1fr; }
+      .delivery-summary { flex-direction:column; }
+      .delivery-customer { font-size:22px; }
+      .delivery-search-card,
+      .delivery-card { padding:16px; border-radius:18px; }
+    }
+
     .tap:active { opacity:.76; transform:scale(.97); transition:.1s; }
   `}</style>
 );
@@ -1380,6 +1619,13 @@ export default function App() {
   const [pedidoLoading, setPedidoLoading] = useState(false);
   const [pedidoError, setPedidoError] = useState(null);
   const [pedidoData, setPedidoData] = useState(null);
+  const [driverCedula, setDriverCedula] = useState("");
+  const [driverLoading, setDriverLoading] = useState(false);
+  const [driverError, setDriverError] = useState(null);
+  const [driverOrders, setDriverOrders] = useState([]);
+  const [driverDrafts, setDriverDrafts] = useState({});
+  const [expandedDriverOrder, setExpandedDriverOrder] = useState(null);
+  const [driverSavingId, setDriverSavingId] = useState("");
   const { toasts, push: toast }     = useToast();
   const [shaking, shake]            = useCartShake();
 
@@ -1651,6 +1897,121 @@ const handleCheckout = useCallback(async () => {
     , 0),
   [pedidoData]);
 
+  const getDeliveryStatusClass = useCallback((value = "") => {
+    const key = normalize(value);
+    if (key.includes("entregado")) return "entregado";
+    if (key.includes("reprogramado")) return "reprogramado";
+    if (key.includes("cancelado")) return "cancelado";
+    if (key.includes("proceso")) return "proceso";
+    return "default";
+  }, []);
+
+  const buscarPedidosConductor = useCallback(async () => {
+    const cedula = normalizeCedula(driverCedula);
+    if (!cedula || cedula.length < 6) {
+      setDriverError("Ingresa una cédula válida para consultar las entregas.");
+      return;
+    }
+
+    setDriverLoading(true);
+    setDriverError(null);
+    setDriverOrders([]);
+    setDriverDrafts({});
+    setExpandedDriverOrder(null);
+
+    try {
+      const url = new URL(SHEETS_CONFIG.scriptUrl);
+      url.searchParams.set("action", SHEETS_CONFIG.driverOrdersAction);
+      url.searchParams.set("cedula", cedula);
+      url.searchParams.set("page", SHEETS_CONFIG.clientePage);
+
+      const res = await fetch(url.toString());
+      if (!res.ok) throw new Error(`Error al consultar las entregas (HTTP ${res.status})`);
+
+      const ct = res.headers.get("content-type") || "";
+      if (!ct.includes("application/json")) {
+        throw new Error("El servidor no devolvió JSON para las entregas del conductor.");
+      }
+
+      const data = await res.json();
+      if (data?.error) throw new Error(data.error);
+
+      const orders = normalizeDriverOrdersResponse(data)
+        .filter((order) => normalizeCedula(order.conductor) === cedula);
+
+      if (!orders.length) {
+        throw new Error("No encontramos pedidos enrutados a esa cédula.");
+      }
+
+      setDriverOrders(orders);
+      setDriverDrafts(
+        orders.reduce((acc, order) => {
+          acc[order.pedidoId] = {
+            entrega: order.entrega || "En proceso",
+            observaciones: order.observaciones || "",
+          };
+          return acc;
+        }, {})
+      );
+      setExpandedDriverOrder(orders[0]?.pedidoId || null);
+    } catch (error) {
+      setDriverError(error.message);
+    } finally {
+      setDriverLoading(false);
+    }
+  }, [driverCedula]);
+
+  const updateDriverDraft = useCallback((pedidoId, field, value) => {
+    setDriverDrafts((prev) => ({
+      ...prev,
+      [pedidoId]: {
+        entrega: prev[pedidoId]?.entrega || "En proceso",
+        observaciones: prev[pedidoId]?.observaciones || "",
+        ...prev[pedidoId],
+        [field]: value,
+      },
+    }));
+  }, []);
+
+  const guardarEstadoEntrega = useCallback(async (order) => {
+    const draft = driverDrafts[order.pedidoId] || {
+      entrega: order.entrega || "En proceso",
+      observaciones: order.observaciones || "",
+    };
+
+    setDriverSavingId(order.pedidoId);
+
+    try {
+      await fetch(SHEETS_CONFIG.scriptUrl, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: SHEETS_CONFIG.updateDeliveryAction,
+          page: SHEETS_CONFIG.clientePage,
+          pedidoId: order.pedidoId,
+          cedula: normalizeCedula(driverCedula),
+          conductor: normalizeCedula(order.conductor),
+          entrega: draft.entrega,
+          observaciones: draft.observaciones,
+        }),
+      });
+
+      setDriverOrders((prev) =>
+        prev.map((item) =>
+          item.pedidoId === order.pedidoId
+            ? { ...item, entrega: draft.entrega, observaciones: draft.observaciones }
+            : item
+        )
+      );
+      toast(`Entrega actualizada para el pedido ${order.pedidoId}`);
+    } catch (error) {
+      toast("No pudimos actualizar la entrega. Intenta nuevamente.");
+    } finally {
+      setDriverSavingId("");
+    }
+  }, [driverCedula, driverDrafts, toast]);
+
   const goTo = (v) => { setView(v); setPolicyView(null); setDrawerOpen(false); setMobileMenuOpen(false); window.scrollTo({ top:0, behavior:"smooth" }); };
   const resetFilters = () => { setSearch(""); setFilterPet(""); setFilterCat(""); setFilterSubcat(""); };
   
@@ -1665,6 +2026,7 @@ const handleCheckout = useCallback(async () => {
           <button className={`nav-link tap ${view==="inicio"?"active":""}`} onClick={() => goTo("inicio")}>Inicio</button>
           <button className={`nav-link tap ${view==="catalogo"?"active":""}`} onClick={() => goTo("catalogo")}>Tienda</button>
           <button className={`nav-link tap ${view==="mipedido"?"active":""}`} onClick={() => goTo("mipedido")}>Mi Pedido</button>
+          <button className={`nav-link tap ${view==="entregadores"?"active":""}`} onClick={() => goTo("entregadores")}>Entregadores</button>
           {/* Hamburger — solo móvil */}
           <button className="nav-hamburger tap" onClick={() => setMobileMenuOpen(v => !v)} aria-label="Abrir menú" aria-expanded={mobileMenuOpen}>
             <Menu size={22} aria-hidden="true" />
@@ -1689,6 +2051,7 @@ const handleCheckout = useCallback(async () => {
             <button className={`mobile-menu-item tap ${view==="inicio"?"active":""}`} onClick={() => goTo("inicio")}>Inicio</button>
             <button className={`mobile-menu-item tap ${view==="catalogo"?"active":""}`} onClick={() => goTo("catalogo")}>Tienda</button>
             <button className={`mobile-menu-item tap ${view==="mipedido"?"active":""}`} onClick={() => goTo("mipedido")}>Mi Pedido</button>
+            <button className={`mobile-menu-item tap ${view==="entregadores"?"active":""}`} onClick={() => goTo("entregadores")}>Entregadores</button>
           </nav>
         </div>
       )}
@@ -1933,7 +2296,162 @@ const handleCheckout = useCallback(async () => {
             )}
           </div>
         </section>
-      )}      
+      )}
+
+      {view === "entregadores" && (
+        <section className="section mipedido-section" aria-labelledby="ent-h">
+          <div className="mipedido-wrap entregadores-wrap">
+            <div className="mipedido-header">
+              <div className="mipedido-icon-wrap"><Truck size={28} color={C.greenMid} aria-hidden="true" /></div>
+              <h2 className="mipedido-title" id="ent-h">Panel de <em>entregadores</em></h2>
+              <p className="mipedido-sub">Consulta los pedidos asignados a tu cédula, revisa sus productos y actualiza la novedad de cada entrega.</p>
+            </div>
+
+            <div className="delivery-search-card">
+              <label className="mipedido-field">
+                <span className="mipedido-field-label">Número de cédula</span>
+                <div className="mipedido-input-row">
+                  <input
+                    className="mipedido-input"
+                    type="text"
+                    inputMode="numeric"
+                    value={driverCedula}
+                    onChange={(e) => {
+                      setDriverCedula(e.target.value.replace(/\D/g, ""));
+                      setDriverError(null);
+                    }}
+                    onKeyDown={(e) => e.key === "Enter" && buscarPedidosConductor()}
+                    placeholder="Ej. 1234567890"
+                    autoComplete="off"
+                    aria-label="Cédula del entregador"
+                  />
+                  <button
+                    className={`mipedido-search-btn tap ${driverLoading ? "loading" : ""}`}
+                    onClick={buscarPedidosConductor}
+                    disabled={driverLoading}
+                    aria-label="Buscar pedidos por cédula"
+                  >
+                    {driverLoading ? "Buscando…" : "Buscar"} <Search size={14} aria-hidden="true" />
+                  </button>
+                </div>
+                {driverError && <p className="mipedido-error" role="alert">{driverError}</p>}
+              </label>
+            </div>
+
+            {!!driverOrders.length && (
+              <div className="delivery-results">
+                {driverOrders.map((order) => {
+                  const draft = driverDrafts[order.pedidoId] || {
+                    entrega: order.entrega || "En proceso",
+                    observaciones: order.observaciones || "",
+                  };
+                  const expanded = expandedDriverOrder === order.pedidoId;
+                  const itemsTotal = (order.items || []).reduce((sum, item) => sum + (item.cantidad || 0), 0);
+
+                  return (
+                    <article key={order.pedidoId} className={`delivery-card ${expanded ? "expanded" : ""}`}>
+                      <button
+                        className="delivery-summary"
+                        onClick={() => setExpandedDriverOrder(expanded ? null : order.pedidoId)}
+                        aria-expanded={expanded}
+                        aria-controls={`delivery-body-${order.pedidoId}`}
+                      >
+                        <div className="delivery-summary-main">
+                          <span className="delivery-order-id">Pedido #{order.pedidoId}</span>
+                          <h3 className="delivery-customer">{order.nombreCompleto || "Cliente sin nombre"}</h3>
+                          <div className="delivery-summary-sub">
+                            <span className="delivery-chip"><Phone size={13} aria-hidden="true" /> {order.celular || "Sin celular"}</span>
+                            <span className="delivery-chip"><MapPin size={13} aria-hidden="true" /> {order.direccionEntrega || "Sin dirección registrada"}</span>
+                            <span className="delivery-chip"><Package size={13} aria-hidden="true" /> {itemsTotal} unidad{itemsTotal === 1 ? "" : "es"}</span>
+                          </div>
+                        </div>
+                        <div style={{display:"flex",alignItems:"center",gap:12}}>
+                          <span className={`delivery-status ${getDeliveryStatusClass(draft.entrega)}`}>{draft.entrega || "En proceso"}</span>
+                          <ChevronRight className={`delivery-chevron ${expanded ? "open" : ""}`} size={18} aria-hidden="true" />
+                        </div>
+                      </button>
+
+                      {expanded && (
+                        <div className="delivery-body" id={`delivery-body-${order.pedidoId}`}>
+                          <div className="delivery-grid">
+                            <div className="delivery-info-box">
+                              <span className="delivery-info-label">Fecha</span>
+                              <div className="delivery-info-value">{order.fecha || "Sin fecha"}</div>
+                            </div>
+                            <div className="delivery-info-box">
+                              <span className="delivery-info-label">Zona / pago</span>
+                              <div className="delivery-info-value">
+                                {[order.zonaEnvio, order.tipoPago].filter(Boolean).join(" · ") || "Sin datos adicionales"}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="mipedido-items-title"><Package size={14} aria-hidden="true" /> Productos y cantidades</p>
+                            {(order.items || []).length ? (
+                              <div className="mipedido-items">
+                                {order.items.map((item, index) => (
+                                  <div key={`${order.pedidoId}-${item.productoId || item.producto}-${index}`} className="mipedido-item">
+                                    <div className="mipedido-item-info">
+                                      <p className="mipedido-item-name">{item.producto || "Producto sin nombre"}</p>
+                                      {item.presentacion && <p className="mipedido-item-pres">{item.presentacion}</p>}
+                                      <p className="mipedido-item-qty">{item.cantidad} unidad{item.cantidad !== 1 ? "es" : ""}</p>
+                                    </div>
+                                    <span className="mipedido-item-price">{fmt(item.subtotalLinea || item.precioUnitario)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="delivery-empty">Este pedido no trajo el detalle de productos en la respuesta del Apps Script.</div>
+                            )}
+                          </div>
+
+                          <div>
+                            <p className="mipedido-items-title"><ClipboardList size={14} aria-hidden="true" /> Estado de la entrega</p>
+                            <div className="delivery-status-actions">
+                              {["Entregado", "Reprogramado", "Cancelado"].map((status) => (
+                                <button
+                                  key={status}
+                                  className={`delivery-status-btn tap ${normalize(draft.entrega) === normalize(status) ? "active" : ""}`}
+                                  onClick={() => updateDriverDraft(order.pedidoId, "entrega", status)}
+                                  type="button"
+                                >
+                                  {status}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="mipedido-items-title"><FileText size={14} aria-hidden="true" /> Observaciones</p>
+                            <textarea
+                              className="delivery-notes"
+                              value={draft.observaciones}
+                              onChange={(e) => updateDriverDraft(order.pedidoId, "observaciones", e.target.value)}
+                              placeholder="Describe aquí cualquier novedad de la entrega"
+                            />
+                          </div>
+
+                          <div className="delivery-footer">
+                            <p className="delivery-helper">La actualización guardará la columna `Entrega` y también el campo de `observaciones` del pedido.</p>
+                            <button
+                              className="delivery-save-btn tap"
+                              onClick={() => guardarEstadoEntrega(order)}
+                              disabled={driverSavingId === order.pedidoId}
+                            >
+                              {driverSavingId === order.pedidoId ? "Guardando…" : "Guardar actualización"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ══ POLÍTICAS ══ */}
       {policyView && (
