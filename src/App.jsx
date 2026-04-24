@@ -445,6 +445,14 @@ const normalizeDriverOrdersResponse = (payload) => {
     .filter((order) => order.pedidoId);
 };
 
+const buildNavigationLinks = (address = "") => {
+  const query = encodeURIComponent((address || "").trim());
+  return {
+    google: `https://www.google.com/maps/search/?api=1&query=${query}`,
+    waze: `https://waze.com/ul?q=${query}&navigate=yes`,
+  };
+};
+
 /* datos locales — misma forma que rowToProduct */
 const PRODUCTS = [
   { id:"P001", name:"Alimento Premium Adulto",
@@ -1504,6 +1512,10 @@ const injectStyles = () => (
       display:inline-flex; align-items:center; gap:6px; padding:6px 10px;
       border-radius:999px; background:#EAF2EB; color:#2D4A35; font-weight:var(--w-semi);
     }
+    .delivery-chip.link {
+      border:none; cursor:pointer; transition:transform .15s ease, background .2s ease;
+    }
+    .delivery-chip.link:hover { background:#dbeadb; transform:translateY(-1px); }
     .delivery-status {
       display:inline-flex; align-items:center; justify-content:center; padding:8px 14px;
       border-radius:999px; font-family:var(--f-body); font-size:11px; font-weight:var(--w-bold);
@@ -1535,6 +1547,16 @@ const injectStyles = () => (
     .delivery-info-value {
       font-family:var(--f-body); font-size:14px; color:#2D4A35; line-height:1.55;
     }
+    .delivery-nav-actions {
+      display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;
+    }
+    .delivery-nav-btn {
+      display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px;
+      border:1.5px solid rgba(74,122,90,0.18); background:#fff; color:#2D4A35;
+      font-family:var(--f-body); font-size:12px; font-weight:var(--w-bold); cursor:pointer;
+      transition:.2s ease;
+    }
+    .delivery-nav-btn:hover { border-color:#4A7A5A; background:#EAF2EB; }
     .delivery-status-actions {
       display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px;
     }
@@ -2347,6 +2369,7 @@ const handleCheckout = useCallback(async () => {
                   };
                   const expanded = expandedDriverOrder === order.pedidoId;
                   const itemsTotal = (order.items || []).reduce((sum, item) => sum + (item.cantidad || 0), 0);
+                  const navLinks = buildNavigationLinks(order.direccionEntrega || "");
 
                   return (
                     <article key={order.pedidoId} className={`delivery-card ${expanded ? "expanded" : ""}`}>
@@ -2361,7 +2384,19 @@ const handleCheckout = useCallback(async () => {
                           <h3 className="delivery-customer">{order.nombreCompleto || "Cliente sin nombre"}</h3>
                           <div className="delivery-summary-sub">
                             <span className="delivery-chip"><Phone size={13} aria-hidden="true" /> {order.celular || "Sin celular"}</span>
-                            <span className="delivery-chip"><MapPin size={13} aria-hidden="true" /> {order.direccionEntrega || "Sin dirección registrada"}</span>
+                            <button
+                              type="button"
+                              className="delivery-chip link tap"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!order.direccionEntrega) return;
+                                window.open(navLinks.google, "_blank", "noopener,noreferrer");
+                              }}
+                              aria-label={`Abrir ${order.direccionEntrega || "dirección"} en Google Maps`}
+                              disabled={!order.direccionEntrega}
+                            >
+                              <MapPin size={13} aria-hidden="true" /> {order.direccionEntrega || "Sin dirección registrada"}
+                            </button>
                             <span className="delivery-chip"><Package size={13} aria-hidden="true" /> {itemsTotal} unidad{itemsTotal === 1 ? "" : "es"}</span>
                           </div>
                         </div>
@@ -2385,6 +2420,27 @@ const handleCheckout = useCallback(async () => {
                               </div>
                             </div>
                           </div>
+
+                          {!!order.direccionEntrega && (
+                            <div className="delivery-nav-actions">
+                              <button
+                                type="button"
+                                className="delivery-nav-btn tap"
+                                onClick={() => window.open(navLinks.google, "_blank", "noopener,noreferrer")}
+                              >
+                                <MapPin size={14} aria-hidden="true" />
+                                Abrir en Google Maps
+                              </button>
+                              <button
+                                type="button"
+                                className="delivery-nav-btn tap"
+                                onClick={() => window.open(navLinks.waze, "_blank", "noopener,noreferrer")}
+                              >
+                                <MapPin size={14} aria-hidden="true" />
+                                Abrir en Waze
+                              </button>
+                            </div>
+                          )}
 
                           <div>
                             <p className="mipedido-items-title"><Package size={14} aria-hidden="true" /> Productos y cantidades</p>
