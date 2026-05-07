@@ -516,6 +516,8 @@ const createOrderId = () => {
 };
 
 /* --- buildOrderPayload y enviarPedidoASheets a nivel de módulo --- */
+const MAKE_WEBHOOK_URL = "https://hook.eu1.make.com/jhrcu5yk1u73tuf3yqcl9ctw5ala8h58";
+
 const buildOrderPayload = ({ orderId, customer, cart, shippingZone, shipCost, subtotal, grandTotal, recurringOrder, recurringDate }) => {
   const fecha = new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" });
   return {
@@ -550,6 +552,52 @@ const buildOrderPayload = ({ orderId, customer, cart, shippingZone, shipCost, su
   };
 };
 
+const buildMakeWebhookPayload = (datosPedido) => {
+  const cliente = datosPedido?.cliente || {};
+  const detalle = Array.isArray(datosPedido?.detalle) ? datosPedido.detalle : [];
+  const totalUnidades = detalle.reduce((sum, item) => sum + (Number(item.cantidad) || 0), 0);
+
+  return {
+    fuente: "soinpets_checkout",
+    evento: "pedido_creado",
+    pedidoId: cliente.pedidoId || "",
+    fecha: cliente.fecha || "",
+    cliente: {
+      nombreCompleto: cliente.nombreCompleto || "",
+      celular: cliente.celular || "",
+      direccionEntrega: cliente.direccionEntrega || "",
+      zonaEnvio: cliente.zonaEnvio || "",
+      tipoPago: cliente.tipoPago || "",
+    },
+    resumen: {
+      subtotal: cliente.subtotal ?? 0,
+      envio: cliente.envio ?? 0,
+      total: cliente.total ?? 0,
+      estado: cliente.estado || "Pendiente",
+      programacion: cliente.Programacion || "No",
+      fechaRecurrente: cliente.FechaRecurrente || "",
+      productosDiferentes: detalle.length,
+      totalUnidades,
+    },
+    productos: detalle.map((item) => ({
+      productoId: item.productoId || item.item || "",
+      producto: item.producto || "",
+      presentacion: item.presentacion || "",
+      cantidad: item.cantidad || 0,
+      precioUnitario: item.precioUnitario || 0,
+      subtotalLinea: item.subtotalLinea || 0,
+    })),
+    mensajeWhatsapp:
+      `Nuevo pedido SOIN ${cliente.pedidoId || ""}\n` +
+      `Cliente: ${cliente.nombreCompleto || ""}\n` +
+      `Celular: ${cliente.celular || ""}\n` +
+      `Dirección: ${cliente.direccionEntrega || ""}\n` +
+      `Zona: ${cliente.zonaEnvio || ""}\n` +
+      `Pago: ${cliente.tipoPago || ""}\n` +
+      `Total: ${fmt(cliente.total ?? 0)}`,
+  };
+};
+
 const enviarPedidoASheets = async (datosPedido) => {
   try {
     await fetch(SHEETS_CONFIG.scriptUrl, {
@@ -561,6 +609,21 @@ const enviarPedidoASheets = async (datosPedido) => {
     return true;
   } catch (error) {
     console.error("Error de conexión:", error);
+    throw error;
+  }
+};
+
+const enviarPedidoAMake = async (datosPedido) => {
+  try {
+    await fetch(MAKE_WEBHOOK_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(buildMakeWebhookPayload(datosPedido)),
+    });
+    return true;
+  } catch (error) {
+    console.error("Error al enviar pedido a Make:", error);
     throw error;
   }
 };
@@ -1788,7 +1851,10 @@ const handleCheckout = useCallback(async () => {
 
     // 3. Intento de registro y cambio de vista
     try {
-      await enviarPedidoASheets(orderPayload);
+      await Promise.all([
+        enviarPedidoASheets(orderPayload),
+        enviarPedidoAMake(orderPayload),
+      ]);
       setCart([]);
       setShipping("");
       setCustomer({ fullName: "", phone: "", address: "", paymentMethod: "" });
