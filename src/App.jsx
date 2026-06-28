@@ -1285,14 +1285,11 @@ const injectStyles = () => (
     .wa-btn:hover { transform:scale(1.08); box-shadow:0 8px 28px rgba(37,211,102,.5); }
 
     /* ── FOOTER ── */
-    .footer { background:${C.greenDark}; padding:52px 5% 28px; }
-    .footer-grid {
-      display:grid; grid-template-columns:1.8fr 1fr 1fr 1fr;
-      gap:36px; max-width:1100px; margin:0 auto 40px;
+    .footer {
+      background:${C.greenDark}; padding:18px 5%;
+      display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;
     }
-    .footer-logo { height:38px; filter:brightness(0) invert(1); margin-bottom:14px; display:block; }
-    .footer-tagline { font-family:var(--f-body); font-size:var(--t-meta); font-weight:var(--w-light); line-height:1.8; max-width:280px; color:rgba(255,255,255,.5); margin-bottom:18px; }
-    .footer-social { display:flex; gap:10px; margin-top:4px; }
+    .footer-social { display:flex; gap:10px; }
     .footer-social-btn {
       width:36px; height:36px; border-radius:50%; border:1.5px solid rgba(255,255,255,.18);
       display:flex; align-items:center; justify-content:center;
@@ -1300,18 +1297,16 @@ const injectStyles = () => (
       transition:background .2s, border-color .2s, color .2s;
     }
     .footer-social-btn:hover { background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.4); color:#fff; }
-    .footer-col h4 { font-family:var(--f-body); font-size:var(--t-small); font-weight:var(--w-semi); letter-spacing:var(--ls-label); text-transform:uppercase; color:${C.greenPale}; margin-bottom:16px; }
-    .footer-col ul { list-style:none; }
-    .footer-col ul li { margin-bottom:9px; }
-    .footer-col ul li a,.footer-col ul li span {
-      font-family:var(--f-body); font-size:var(--t-meta); font-weight:var(--w-light);
-      color:rgba(255,255,255,.4); text-decoration:none; transition:color .2s;
-      display:flex; align-items:flex-start; gap:7px; line-height:1.5;
+    .footer-signature {
+      font-family:var(--f-body); font-size:var(--t-small); font-weight:var(--w-reg);
+      letter-spacing:.03em; color:rgba(255,255,255,.48); text-align:center;
     }
-    .footer-col ul li a:hover { color:${C.greenPale}; }
-    .footer-col ul li svg { flex-shrink:0; margin-top:2px; opacity:.6; }
-    .footer-strip { text-align:center; font-family:var(--f-body); font-size:var(--t-small); font-weight:var(--w-reg); letter-spacing:.03em; color:${C.goldLight}; padding:13px; background:rgba(255,255,255,.05); border-radius:8px; max-width:1100px; margin:0 auto 32px; }
-    .footer-bottom { border-top:1px solid rgba(255,255,255,.08); padding-top:22px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; font-family:var(--f-body); font-size:var(--t-small); font-weight:var(--w-reg); color:rgba(255,255,255,.25); max-width:1100px; margin:0 auto; }
+    .mobile-menu-divider { height:1px; background:rgba(74,122,90,.16); margin:8px 0; }
+    .mobile-menu-label {
+      font-family:var(--f-body); font-size:10px; font-weight:var(--w-bold);
+      letter-spacing:var(--ls-label); text-transform:uppercase; color:${C.greenMid};
+      padding:8px 14px 2px;
+    }
 
     /* ── POLÍTICAS (vista inline) ── */
     .policy-section { background:${C.warmWhite}; padding:60px 5%; max-width:860px; margin:0 auto; }
@@ -1329,8 +1324,17 @@ const injectStyles = () => (
     /* ── RESPONSIVE ── */
     @media(max-width:640px){
       .hero               { min-height:0; overflow:hidden; background:#dfeadf; }
-      .hero-img           { width:100%; height:auto; max-height:none; min-height:0; object-fit:contain; object-position:center top; display:block; }
-      .hero-overlay       { display:none; }
+      .hero-img           { height:auto; max-height:none; min-height:0; object-fit:contain; object-position:center top; display:block; }
+      .hero-overlay       {
+        display:flex; align-items:center; justify-content:flex-start;
+        padding:0 4%;
+        background:linear-gradient(90deg,rgba(45,74,53,.68) 0%,rgba(45,74,53,.42) 34%,rgba(45,74,53,.08) 55%,transparent 76%);
+      }
+      .hero-content       { max-width:48%; padding-top:4px; }
+      .hero-title         { font-size:clamp(18px,5vw,27px); line-height:1.05; margin-bottom:7px; }
+      .hero-sub           { font-size:10px; line-height:1.35; margin-bottom:11px; max-width:175px; }
+      .hero-eyebrow       { font-size:8px; padding:3px 8px; margin-bottom:7px; }
+      .hero-cta           { font-size:9px; padding:8px 10px; gap:4px; max-width:100%; line-height:1.2; }
       .hero-text-mobile   { display:none; }
 
       .nav { height:56px; padding:0 4%; gap:8px; }
@@ -1345,44 +1349,25 @@ const injectStyles = () => (
       .cart-trigger svg { width:18px; height:18px; }
       .cart-badge { top:-5px; right:-5px; width:18px; height:18px; font-size:9px; }
 
-      .trust              { display:none; }
+      .trust              { display:grid; grid-template-columns:1fr 1fr; }
+      .trust-item         { min-width:0; padding:13px 10px; border-right:none; max-width:100%; border-bottom:1px solid rgba(255,255,255,.08); }
+      .trust-item:nth-child(odd)       { border-right:1px solid rgba(255,255,255,.08); }
+      .trust-item:nth-last-child(-n+2) { border-bottom:none; }
 
       .featured-grid      { grid-template-columns:1fr 1fr; gap:10px; }
       .featured-scroll    { gap:10px; }
       .featured-scroll .pcard { min-width:172px; max-width:172px; flex-basis:172px; }
-      .products-grid      { grid-template-columns:1fr 1fr; gap:11px; }
-      .search-wrap        { margin-bottom:14px; }
-      .filters-grid       { grid-template-columns:1fr; gap:8px; margin-bottom:18px; }
-      .filter-label       { display:none; }
-      .filter-select      { padding:10px 12px; font-size:12px; }
-
+      .products-grid      { grid-template-columns:1fr 1fr; gap:10px; }
+      .filters-grid       { grid-template-columns:1fr; gap:9px; margin-bottom:22px; }
       .pcard-img          { height:130px; object-fit:contain; }
-      .pcard-cat          { display:none; }
       .pcard-name         { font-size:15px; }
       .pcard-body         { padding:10px 11px 12px; }
-      .pcard-detail-btn   { margin-bottom:9px; }
-      .pcard-price        { font-size:18px; }
-      .add-btn            { width:34px; height:34px; }
 
-      .section            { padding:30px 4%; }
-      .section-alt        { padding-top:24px !important; }
-      .section-header     { margin-bottom:22px; }
-      .eyebrow            { margin-bottom:6px; }
+      .section            { padding:36px 4%; }
+      .section-header     { margin-bottom:28px; }
       .drawer             { width:100%; }
-      .footer             { padding:24px 5% 20px; }
-      .footer-strip       { display:none; }
-      .footer-grid        { grid-template-columns:1fr; gap:18px; margin-bottom:22px; text-align:center; }
-      .footer-grid > div:first-child { display:flex; flex-direction:column; align-items:center; }
-      .footer-grid > div:nth-child(2) { display:none; }
-      .footer-logo        { height:34px; margin-bottom:10px; }
-      .footer-tagline     { display:none; }
-      .footer-social      { justify-content:center; margin-top:0; }
-      .footer-col h4      { margin-bottom:10px; }
-      .footer-col ul      { display:flex; flex-wrap:wrap; justify-content:center; gap:9px 14px; }
-      .footer-col ul li   { margin-bottom:0; }
-      .footer-col ul li a,
-      .footer-col ul li span { justify-content:center; align-items:center; font-size:12px; gap:5px; }
-      .footer-bottom      { justify-content:center; text-align:center; padding-top:16px; gap:4px; }
+      .footer             { padding:14px 5% 16px; gap:10px; flex-direction:column; }
+      .footer-social-btn  { width:34px; height:34px; }
     }
 
     @media(max-width:380px){
@@ -1390,10 +1375,11 @@ const injectStyles = () => (
       .nav-logo { height:34px; max-width:110px; }
       .nav-links { gap:6px; }
       .nav-hamburger, .cart-trigger { width:38px; height:38px; min-width:38px; min-height:38px; }
-      .products-grid      { gap:9px; }
-      .pcard-img          { height:118px; }
-      .pcard-name         { font-size:14px; }
-      .pcard-body         { padding:9px 10px 11px; }
+      .hero-content       { max-width:46%; }
+      .hero-title         { font-size:clamp(16px,4.9vw,22px); }
+      .hero-sub           { font-size:9px; margin-bottom:9px; max-width:150px; }
+      .hero-eyebrow       { font-size:7px; padding:3px 7px; }
+      .hero-cta           { font-size:8px; padding:7px 8px; }
     }
 
     .tap { cursor:pointer; user-select:none; }
@@ -1435,6 +1421,7 @@ const injectStyles = () => (
       background:none; border-radius:12px; cursor:pointer;
       font-family:var(--f-body); font-size:16px; font-weight:var(--w-semi);
       color:#7A7A6A; transition:background .2s, color .2s;
+      display:flex; align-items:center; gap:8px; text-decoration:none;
     }
     .mobile-menu-item:hover,.mobile-menu-item.active {
       background:#EAF2EB; color:#2D4A35;
@@ -2148,6 +2135,22 @@ const handleCheckout = useCallback(async () => {
             <button className={`mobile-menu-item tap ${view==="catalogo"?"active":""}`} onClick={() => goTo("catalogo")}>Tienda</button>
             <button className={`mobile-menu-item tap ${view==="mipedido"?"active":""}`} onClick={() => goTo("mipedido")}>Mi Pedido</button>
             <button className={`mobile-menu-item tap ${view==="entregadores"?"active":""}`} onClick={() => goTo("entregadores")}>Entregadores</button>
+            <div className="mobile-menu-divider" />
+            <p className="mobile-menu-label">Políticas</p>
+            <button className="mobile-menu-item tap" onClick={() => { setPolicyView("envios"); setMobileMenuOpen(false); window.scrollTo({top:0,behavior:"smooth"}); }}>
+              Política de envíos
+            </button>
+            <button className="mobile-menu-item tap" onClick={() => { setPolicyView("devoluciones"); setMobileMenuOpen(false); window.scrollTo({top:0,behavior:"smooth"}); }}>
+              Cambios y devoluciones
+            </button>
+            <button className="mobile-menu-item tap" onClick={() => { setPolicyView("datos"); setMobileMenuOpen(false); window.scrollTo({top:0,behavior:"smooth"}); }}>
+              Protección de datos
+            </button>
+            <div className="mobile-menu-divider" />
+            <p className="mobile-menu-label">Contacto</p>
+            <a className="mobile-menu-item tap" href="tel:+573125071461"><Phone size={15} /> 312 507 1461</a>
+            <a className="mobile-menu-item tap" href="mailto:soinpets@gmail.com"><Mail size={15} /> soinpets@gmail.com</a>
+            <a className="mobile-menu-item tap" href="https://wa.me/573125071461" target="_blank" rel="noreferrer"><MessageCircle size={15} /> WhatsApp</a>
           </nav>
         </div>
       )}
@@ -2642,99 +2645,24 @@ const handleCheckout = useCallback(async () => {
 
       {/* FOOTER */}
       <footer className="footer">
-        <div className="footer-strip">♡ Cuidamos a quienes llenan tu vida de amor, alegría y compañía. ♡</div>
-        <div className="footer-grid">
-          {/* Columna 1 — Marca + redes */}
-          <div>
-            <img className="footer-logo" src="/Logo.png" alt="SOIN" />
-            <p className="footer-tagline">Todo lo que tu mascota necesita, en un solo lugar. Productos naturales con respaldo veterinario para perros y gatos de Colombia.</p>
-            <div className="footer-social">
-              <a className="footer-social-btn"
-                href="https://www.facebook.com/profile.php?id=61572112329789"
-                target="_blank" rel="noreferrer" aria-label="Facebook de SOIN Pets">
-                <Facebook size={16} />
-              </a>
-              <a className="footer-social-btn"
-                href="https://www.instagram.com/soin.pets/"
-                target="_blank" rel="noreferrer" aria-label="Instagram de SOIN Pets">
-                <Instagram size={16} />
-              </a>
-              <a className="footer-social-btn"
-                href="https://wa.me/573125071461"
-                target="_blank" rel="noreferrer" aria-label="WhatsApp de SOIN Pets">
-                <MessageCircle size={16} />
-              </a>
-            </div>
-          </div>
-
-          {/* Columna 2 — Tienda */}
-          <div className="footer-col">
-            <h4>Tienda</h4>
-            <ul>
-              {["Perros","Gatos","Alimentos Nutritivos","Accesorios","Salud y Bienestar"].map(l => (
-                <li key={l}><a href="#" onClick={(e)=>{e.preventDefault();goTo("catalogo");}}>{l}</a></li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Columna 3 — Políticas */}
-          <div className="footer-col">
-            <h4>Políticas</h4>
-            <ul>
-              <li>
-                <a href="#" onClick={(e)=>{e.preventDefault();setPolicyView("envios");window.scrollTo({top:0,behavior:"smooth"});}}>
-                  <Truck size={12} /> Política de envíos
-                </a>
-              </li>
-              <li>
-                <a href="#" onClick={(e)=>{e.preventDefault();setPolicyView("devoluciones");window.scrollTo({top:0,behavior:"smooth"});}}>
-                  <RefreshCw size={12} /> Cambios y devoluciones
-                </a>
-              </li>
-              <li>
-                <a href="#" onClick={(e)=>{e.preventDefault();setPolicyView("datos");window.scrollTo({top:0,behavior:"smooth"});}}>
-                  <Lock size={12} /> Protección de datos
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Columna 4 — Contacto */}
-          <div className="footer-col">
-            <h4>Contacto</h4>
-            <ul>
-              <li>
-                <span>
-                  <MapPin size={12} />
-                  Envigado, Antioquia, Colombia
-                </span>
-              </li>
-              <li>
-                <a href="tel:+573125071461">
-                  <Phone size={12} />
-                  312 507 1461
-                </a>
-              </li>
-              <li>
-                <a href="mailto:soinpets@gmail.com">
-                  <Mail size={12} />
-                  soinpets@gmail.com
-                </a>
-              </li>
-              <li>
-                <a href="https://wa.me/573125071461" target="_blank" rel="noreferrer">
-                  <MessageCircle size={12} />
-                  WhatsApp
-                </a>
-              </li>
-            </ul>
-          </div>
+        <div className="footer-social">
+          <a className="footer-social-btn"
+            href="https://www.facebook.com/profile.php?id=61572112329789"
+            target="_blank" rel="noreferrer" aria-label="Facebook de SOIN Pets">
+            <Facebook size={16} />
+          </a>
+          <a className="footer-social-btn"
+            href="https://www.instagram.com/soin.pets/"
+            target="_blank" rel="noreferrer" aria-label="Instagram de SOIN Pets">
+            <Instagram size={16} />
+          </a>
+          <a className="footer-social-btn"
+            href="https://wa.me/573125071461"
+            target="_blank" rel="noreferrer" aria-label="WhatsApp de SOIN Pets">
+            <MessageCircle size={16} />
+          </a>
         </div>
-
-        <div className="footer-bottom">
-          <span>© 2025 SOIN Pets, Envigado — Todos los derechos reservados.</span>
-          <span>Hecho con 🤍 en Colombia</span>
-        </div>
+        <p className="footer-signature">© 2025 SOIN Pets · Hecho en Colombia</p>
       </footer>
 
       {/* CART DRAWER */}
