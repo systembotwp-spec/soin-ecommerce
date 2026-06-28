@@ -1931,6 +1931,14 @@ const handleCheckout = useCallback(async () => {
   /* ── Carga los productos del pedido al carrito ── */
   const cargarPedidoAlCarrito = useCallback(() => {
     if (!pedidoData?.items?.length) return;
+    const clientePedido = pedidoData.cliente || {};
+    setCustomer((prev) => ({
+      ...prev,
+      fullName: clientePedido.nombreCompleto || prev.fullName,
+      phone: clientePedido.celular || prev.phone,
+      address: clientePedido.direccionEntrega || prev.address,
+    }));
+
     let agregados = 0;
     pedidoData.items.forEach((item) => {
       const found = catalogProducts.find(
@@ -1970,7 +1978,7 @@ const handleCheckout = useCallback(async () => {
       }
       agregados++;
     });
-    toast(`✓ ${agregados} producto${agregados !== 1 ? "s" : ""} del pedido agregado${agregados !== 1 ? "s" : ""} al carrito`);
+    toast(`✓ ${agregados} producto${agregados !== 1 ? "s" : ""} del pedido agregado${agregados !== 1 ? "s" : ""} al carrito con tus datos de entrega`);
     setDrawerOpen(true);
   }, [pedidoData, catalogProducts, addToCart, toast]);
 
