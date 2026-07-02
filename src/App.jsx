@@ -280,7 +280,7 @@ const rowToPedidoCliente = (row = []) => ({
   subtotal: toMoneyNumber(row[7]),
   envio: toMoneyNumber(row[8]),
   total: toMoneyNumber(row[9]),
-  estado: row[15] ?? "", // Columna P de la hoja "Cliente" (En proceso, Entregado, Reprogramado)
+  estado: row[15] ?? "", // Columna P ("Entrega") de la hoja "Cliente" — En proceso, Entregado, Reprogramado
 });
 
 const normalizePedidoCliente = (clienteRaw, items = []) => {
@@ -310,7 +310,7 @@ const normalizePedidoCliente = (clienteRaw, items = []) => {
     subtotal: subtotal ?? subtotalItems,
     envio,
     total: total ?? ((subtotal ?? subtotalItems) + (envio ?? 0)),
-    estado: getOrderField(clienteBase, "estado", "status") || "Registrado",
+    estado: getOrderField(clienteBase, "entrega", "estado", "status") || "Registrado",
   };
 };
 
