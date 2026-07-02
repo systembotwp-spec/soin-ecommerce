@@ -328,7 +328,7 @@ const rowToDriverOrder = (row = []) => ({
   subtotal: toMoneyNumber(row[8]),
   envio: toMoneyNumber(row[9]),
   total: toMoneyNumber(row[10]),
-  estado: row[15] ?? "",
+  estado: row[11] ?? "",
   programacion: row[12] ?? "",
   fechaRecurrente: row[13] ?? "",
   conductor: row[14] ?? "",
