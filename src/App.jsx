@@ -534,7 +534,7 @@ const buildOrderPayload = ({ orderId, customer, cart, shippingZone, shipCost, su
       subtotal,
       envio: shipCost,
       total: grandTotal,
-      estado: "Pendiente",
+      estado: "En Proceso",
       Programacion: recurringOrder ? "Sí" : "No",
       FechaRecurrente: recurringOrder && recurringDate ? recurringDate : "",
     },
