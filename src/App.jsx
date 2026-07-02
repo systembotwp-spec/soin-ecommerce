@@ -280,7 +280,7 @@ const rowToPedidoCliente = (row = []) => ({
   subtotal: toMoneyNumber(row[7]),
   envio: toMoneyNumber(row[8]),
   total: toMoneyNumber(row[9]),
-  estado: row[15] ?? "", // Columna P de la hoja "Cliente"
+  estado: row[11] ?? "", // Columna L de la hoja "Cliente"
 });
 
 const normalizePedidoCliente = (clienteRaw, items = []) => {
