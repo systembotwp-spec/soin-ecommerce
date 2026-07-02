@@ -280,7 +280,7 @@ const rowToPedidoCliente = (row = []) => ({
   subtotal: toMoneyNumber(row[7]),
   envio: toMoneyNumber(row[8]),
   total: toMoneyNumber(row[9]),
-  estado: row[11] ?? "", // Columna L de la hoja "Cliente"
+  estado: row[15] ?? "", // Columna P de la hoja "Cliente" (En proceso, Entregado, Reprogramado)
 });
 
 const normalizePedidoCliente = (clienteRaw, items = []) => {
@@ -1489,6 +1489,7 @@ const injectStyles = () => (
     .mipedido-badge.pendiente    { background:#fff4d6; color:#8a5b00; }
     .mipedido-badge.confirmado   { background:#eef2ff; color:#3d4fb3; }
     .mipedido-badge.proceso      { background:#eef2ff; color:#3d4fb3; }
+    .mipedido-badge.reprogramado { background:#eef2ff; color:#3d4fb3; }
     .mipedido-badge.enviado      { background:#e0f2fe; color:#0c5c8a; }
     .mipedido-badge.entregado    { background:#e7f7ec; color:#23643a; }
     .mipedido-badge.cancelado    { background:#fce8e8; color:#b53b3b; }
@@ -2019,6 +2020,7 @@ const handleCheckout = useCallback(async () => {
     const key = normalize(value);
     if (key.includes("entregado")) return "entregado";
     if (key.includes("cancelado")) return "cancelado";
+    if (key.includes("reprogramado")) return "reprogramado";
     if (key.includes("enviado")) return "enviado";
     if (key.includes("confirmado")) return "confirmado";
     if (key.includes("proceso") || key.includes("preparacion")) return "proceso";
