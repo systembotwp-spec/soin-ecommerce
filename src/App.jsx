@@ -280,7 +280,7 @@ const rowToPedidoCliente = (row = []) => ({
   subtotal: toMoneyNumber(row[7]),
   envio: toMoneyNumber(row[8]),
   total: toMoneyNumber(row[9]),
-  estado: row[10] ?? "",
+  estado: row[15] ?? "", // Columna P de la hoja "Cliente"
 });
 
 const normalizePedidoCliente = (clienteRaw, items = []) => {
@@ -526,9 +526,9 @@ const buildOrderPayload = ({ orderId, customer, cart, shippingZone, shipCost, su
     cliente: {
       pedidoId: orderId,
       fecha,
-      nombreCompleto: customer.fullName.trim(),
-      celular: customer.phone.trim(),
-      direccionEntrega: customer.address.trim(),
+      nombreCompleto: String(customer.fullName ?? "").trim(),
+      celular: String(customer.phone ?? "").trim(),
+      direccionEntrega: String(customer.address ?? "").trim(),
       zonaEnvio: shippingZone,
       tipoPago: customer.paymentMethod,
       subtotal,
@@ -1484,8 +1484,15 @@ const injectStyles = () => (
     .mipedido-badge {
       background:#2D4A35; color:#fff; border-radius:50px; padding:4px 12px;
       font-family:var(--f-body); font-size:10px; font-weight:var(--w-bold);
-      text-transform:uppercase; letter-spacing:.06em;
+      text-transform:uppercase; letter-spacing:.06em; white-space:nowrap;
     }
+    .mipedido-badge.pendiente    { background:#fff4d6; color:#8a5b00; }
+    .mipedido-badge.confirmado   { background:#eef2ff; color:#3d4fb3; }
+    .mipedido-badge.proceso      { background:#eef2ff; color:#3d4fb3; }
+    .mipedido-badge.enviado      { background:#e0f2fe; color:#0c5c8a; }
+    .mipedido-badge.entregado    { background:#e7f7ec; color:#23643a; }
+    .mipedido-badge.cancelado    { background:#fce8e8; color:#b53b3b; }
+    .mipedido-badge.default      { background:#2D4A35; color:#fff; }
     .mipedido-cliente-info {
       padding:14px 16px; background:#fff; border:1.5px solid rgba(74,122,90,0.18);
       border-radius:14px; display:flex; flex-direction:column; gap:5px;
@@ -1815,14 +1822,14 @@ const handleCheckout = useCallback(async () => {
       ["phone", "número de celular"],
       ["address", "dirección de entrega"],
       ["paymentMethod", "tipo de pago"],
-    ].find(([field]) => !customer[field].trim());
+    ].find(([field]) => !String(customer[field] ?? "").trim());
 
     if (missingCustomerField) {
       toast(`Completa ${missingCustomerField[1]} para continuar`);
       return;
     }
 
-    const phoneDigits = customer.phone.replace(/\D/g, "");
+    const phoneDigits = String(customer.phone ?? "").replace(/\D/g, "");
     if (phoneDigits.length !== 10) {
       toast("El número de celular debe tener exactamente 10 dígitos");
       return;
@@ -1932,11 +1939,21 @@ const handleCheckout = useCallback(async () => {
   const cargarPedidoAlCarrito = useCallback(() => {
     if (!pedidoData?.items?.length) return;
     const clientePedido = pedidoData.cliente || {};
+    // Google Sheets puede devolver celular/nombre/dirección como número u otro tipo;
+    // los convertimos a texto explícitamente para que el checkout (que usa .trim())
+    // no falle y el botón "Finalizar pedido" pueda habilitarse correctamente.
+    const toText = (value, fallback = "") =>
+      value == null || value === "" ? fallback : String(value).trim();
+
+    const tipoPagoTexto = toText(clientePedido.tipoPago, "");
+    const paymentMatch = PAYMENT_METHODS.find((m) => normalize(m) === normalize(tipoPagoTexto));
+
     setCustomer((prev) => ({
       ...prev,
-      fullName: clientePedido.nombreCompleto || prev.fullName,
-      phone: clientePedido.celular || prev.phone,
-      address: clientePedido.direccionEntrega || prev.address,
+      fullName: toText(clientePedido.nombreCompleto, prev.fullName),
+      phone: toText(clientePedido.celular, prev.phone),
+      address: toText(clientePedido.direccionEntrega, prev.address),
+      paymentMethod: paymentMatch || prev.paymentMethod,
     }));
 
     let agregados = 0;
@@ -1994,6 +2011,18 @@ const handleCheckout = useCallback(async () => {
     if (key.includes("reprogramado")) return "reprogramado";
     if (key.includes("cancelado")) return "cancelado";
     if (key.includes("proceso")) return "proceso";
+    return "default";
+  }, []);
+
+  /* Clase de color del badge de estado en "Mi Pedido" (columna P — hoja Cliente) */
+  const getOrderStatusClass = useCallback((value = "") => {
+    const key = normalize(value);
+    if (key.includes("entregado")) return "entregado";
+    if (key.includes("cancelado")) return "cancelado";
+    if (key.includes("enviado")) return "enviado";
+    if (key.includes("confirmado")) return "confirmado";
+    if (key.includes("proceso") || key.includes("preparacion")) return "proceso";
+    if (key.includes("pendiente")) return "pendiente";
     return "default";
   }, []);
 
@@ -2364,7 +2393,13 @@ const handleCheckout = useCallback(async () => {
                 <div className="mipedido-result-header">
                   <div className="mipedido-result-meta">
                     <span className="mipedido-result-id">Pedido #{pedidoData.cliente?.pedidoId || "—"}</span>
+                    {pedidoData.cliente?.fecha && (
+                      <span className="mipedido-result-date">{pedidoData.cliente.fecha}</span>
+                    )}
                   </div>
+                  <span className={`mipedido-badge ${getOrderStatusClass(pedidoData.cliente?.estado)}`}>
+                    {pedidoData.cliente?.estado || "Sin estado"}
+                  </span>
                 </div>
 
                 <div className="mipedido-cliente-info">
